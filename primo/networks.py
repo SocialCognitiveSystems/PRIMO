@@ -320,12 +320,22 @@ class TwoTBN(BayesianNetwork):
             cpd.add_variable(node)
             node.set_cpd(cpd)
             if not initial:
-                node.set_probability(1., [(node, state[node_t])])
+                if isinstance(state[node_t], basestring):
+                    node.set_probability(1., [(node, state[node_t])])
+                else:
+                    # Set soft evidence
+                    #print "from twotbn: setting " + str(node) + " cpt to " + str(state[node_t])
+                    node.get_cpd().set_probability_table(state[node_t])
             else:
                 for node0 in state:
-                    if node0.name == node.name:
-                        node.set_probability(1., [(node, state[node0])])
-                        continue
+                    if node0.name == node_t.name:
+                        if isinstance(state[node0], basestring):
+                            node.set_probability(1., [(node, state[node0])])
+                        else:
+                            # Set soft evidence
+                            #print "from b0: setting " + str(node) + " cpt to " + str(state[node0])
+                            node.get_cpd().set_probability_table(state[node0])
+                        break
         return self
 
 
@@ -353,6 +363,9 @@ class TwoTBN(BayesianNetwork):
         node0 = self.get_node(node_name)
         node1 = self.get_node(node_name_t)
         self.__initial_nodes.append((node0, node1))
+
+    def get_initial_nodes(self):
+        return self.__initial_nodes
 
     def has_initial_node_by_name(self, node_name):
         '''
