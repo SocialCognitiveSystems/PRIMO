@@ -277,14 +277,12 @@ class ProbabilityTable(Density):
     def get_neutral_multiplication_PT():
         pt = ProbabilityTable()
         pt.set_probability_table(numpy.array(1.0),[])
-
         return pt
 
 
     def __init__(self):
         super(ProbabilityTable, self).__init__()
         self.variables = []
-
         #need to be 0.0 instead of 0 because of precision
         #otherwise the function set probability doesn't work correctly
         self.table = numpy.array(0.0)
@@ -302,20 +300,18 @@ class ProbabilityTable(Density):
         self.table=numpy.expand_dims(self.table,ax)
         self.table=numpy.repeat(self.table,len(variable.value_range),axis = ax)
 
-
-
-    def set_probability_table(self, table, nodes):
-        if not set(nodes) == set(self.variables):
-            raise Exception("The list which should define the ordering of the variables does not match"
-                " the variables that this cpt depends on (plus the node itself)")
-        if not self.table.ndim == table.ndim:
-            raise Exception("The provided probability table does not have the right number of dimensions")
-        for d,node in enumerate(nodes):
-            if len(node.value_range) != table.shape[d]:
-                raise Exception("The size of the provided probability table does not match the number of possible values of the node "+node.name+" in dimension "+str(d))
-
+    def set_probability_table(self, table, nodes=None):
+        if nodes is not None:
+            if not set(nodes) == set(self.variables):
+                raise Exception("The list which should define the ordering of the variables does not match"
+                    " the variables that this cpt depends on (plus the node itself)")
+            if not self.table.ndim == table.ndim:
+                raise Exception("The provided probability table does not have the right number of dimensions")
+            for d,node in enumerate(nodes):
+                if len(node.value_range) != table.shape[d]:
+                    raise Exception("The size of the provided probability table does not match the number of possible values of the node "+node.name+" in dimension "+str(d))
+            self.variables = nodes
         self.table = table
-        self.variables = nodes
 
     def parametrize_from_states(self, samples, number_of_samples):
         '''This method uses a list of variable-instantiations to change this nodes internal

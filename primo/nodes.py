@@ -108,7 +108,7 @@ class DiscreteNode(RandomNode):
     def get_probability(self, value, node_value_pairs):
         return self.cpd.get_probability([(self,value)] + node_value_pairs)
 
-    def set_probability_table(self, table, nodes):
+    def set_probability_table(self, table, nodes=None):
         self.cpd.set_probability_table(table, nodes)
 
     def is_valid(self):
