@@ -320,3 +320,31 @@ class XMLBIF(object):
         for (i, n) in enumerate(number_list):
             number_list[i] = float(n)
         return number_list
+
+def create_DBN_from_spec(dbn_spec):
+    '''
+    Keyword arguments:
+    dbn_spec -- is a filepath to a JSON specification of a dynamic Bayesian network
+
+    Example:
+    > {
+    >     "B0": "b0_network.xbif",
+    >     "TBN": "tbn_network.xbif",
+    >     "transitions": [
+    >         ["node_a_t0", "node_a"],
+    >         ["node_b_t0", "node_b"]
+    >     ]
+    > }
+
+    Returns an instantiated dynamic Bayesian network.
+    '''
+    import json
+    with open(dbn_spec) as json_data:
+        spec = json.load(json_data)
+        dbn = primo.networks.DynamicBayesianNetwork()
+    dbn.B0 = XMLBIF.read(spec['B0'])
+    tbn = primo.networks.TwoTBN(XMLBIF.read(spec['TBN']))
+    dbn.twoTBN = tbn
+    for transition in spec['transitions']:
+        tbn.set_initial_node(transition[0], transition[1])
+    return dbn
