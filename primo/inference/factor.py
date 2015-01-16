@@ -100,13 +100,14 @@ class FactorTree(object):
         self.push_phase(self.rootNode,self.graph,primo.densities.ProbabilityTable.get_neutral_multiplication_PT())
         self.graph.graph['messagesValid'] = True
 
-    def set_evidences(self,evidences):
-        self.graph.graph['messagesValid'] = False
-        evNodes = zip(*evidences)
-        for factor in self.graph.nodes():
-            if factor.get_node() in evNodes[0]:
-                idx = evNodes[0].index(factor.get_node())
-                factor.set_evidence(evidences[idx])
+    def set_evidences(self, evidence=None):
+        if not evidence is None:
+            self.graph.graph['messagesValid'] = False
+            evNodes = zip(*evidence)
+            for factor in self.graph.nodes():
+                if factor.get_node() in evNodes[0]:
+                    idx = evNodes[0].index(factor.get_node())
+                    factor.set_evidence(evidence[idx])
 
     def pull_phase(self,factor,graph):
         calCPD = factor.get_calculation_CDP()

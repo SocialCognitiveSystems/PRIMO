@@ -99,7 +99,7 @@ print "Baum_CallsFT: " + str(factorTree.calculate_marginal([baum_calls]))
 print "BurglaryFT: " + str(factorTree.calculate_marginal([burglary]))
 print "EarthquakeFT: " + str(factorTree.calculate_marginal([earthquake]))
 
-factorTree.set_evidences([(alarm, "Ringing"),(earthquake, "Calm")])
+factorTree.set_evidence([(alarm, "Ringing"),(earthquake, "Calm")])
 
 print "PoE: " + str(factorTree.calculate_PoE())
 
