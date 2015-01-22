@@ -1,6 +1,7 @@
 import networkx as nx
 
 import primo.densities
+import primo.inference.factor
 import primo.nodes
 
 class BayesianNetwork(object):
@@ -240,10 +241,11 @@ class DynamicBayesianNetwork(BayesianNetwork):
     acyclic (within a slice)
     '''
 
-    def __init__(self):
+    def __init__(self, b0=None, two_tbn=None):
         super(DynamicBayesianNetwork, self).__init__()
-        self._B0 = BayesianNetwork()
-        self._twoTBN = TwoTBN()
+        self._B0 = BayesianNetwork() if b0 is None else b0
+        self._twoTBN = TwoTBN() if two_tbn is None else two_tbn
+        self._t = 0
 
     @property
     def B0(self):
@@ -277,16 +279,36 @@ class DynamicBayesianNetwork(BayesianNetwork):
             raise Exception("Can only set 'TwoTBN' and its subclasses as " +
             "twoTBN of a DBN.")
 
+    @property
+    def t(self):
+        return self._t
+
+    def t_plus_1(self, evidence=None):
+        state = {}
+        if self._t == 0:
+            ft = primo.inference.factor.FactorTreeFactory().create_greedy_factortree(self._B0)
+            state_vars = [self._B0.get_node(n.name) for (_, n) in self._twoTBN.get_initial_nodes()]
+        else:
+            ft = primo.inference.factor.FactorTreeFactory().create_greedy_factortree(self._twoTBN)
+            state_vars = [nt for (_, nt) in self._twoTBN.get_initial_nodes()]
+        ft.set_evidence(evidence)
+        for var in state_vars:
+            state[var] = ft.calculate_marginal([var]).table
+        next_tslice = self._twoTBN.create_timeslice(state, True if self._t == 0 else False)
+        self._twoTBN = next_tslice
+        self._t += 1
+
     def is_valid(self):
         '''Check if graph structure is valid. And if there is a same-named
         inital node in towTBN for every node in BO.
         Returns true if graph is directed and acyclic, false otherwiese'''
+        valid = True
         for node in self._B0.get_nodes():
             if not self._twoTBN.has_initial_node_by_name(node.name):
                 print("Node with name " + str(node.name) +
                 " not found in TwoTBN!")
-                return False
-        return super(DynamicBayesianNetwork, self).is_valid()
+                valid = False
+        return False if not valid else super(DynamicBayesianNetwork, self).is_valid()
 
 
 class TwoTBN(BayesianNetwork):
@@ -300,7 +322,7 @@ class TwoTBN(BayesianNetwork):
                 raise Exception("Parameter 'bayesnet' is not a instance of class BayesianNetwork.")
             self.graph = bayesnet.graph
             self.node_lookup = bayesnet.node_lookup
-        self.__initial_nodes = []
+        self._initial_nodes = []
 
     def create_timeslice(self, state, initial=False):
         '''
@@ -315,7 +337,7 @@ class TwoTBN(BayesianNetwork):
         Returns this instance with all initial nodes set to their
         new value.
         '''
-        for (node, node_t) in self.__initial_nodes:
+        for (node, node_t) in self._initial_nodes:
             cpd = primo.densities.ProbabilityTable()
             cpd.add_variable(node)
             node.set_cpd(cpd)
@@ -362,10 +384,10 @@ class TwoTBN(BayesianNetwork):
         '''
         node0 = self.get_node(node_name)
         node1 = self.get_node(node_name_t)
-        self.__initial_nodes.append((node0, node1))
+        self._initial_nodes.append((node0, node1))
 
     def get_initial_nodes(self):
-        return self.__initial_nodes
+        return self._initial_nodes
 
     def has_initial_node_by_name(self, node_name):
         '''
@@ -373,7 +395,4 @@ class TwoTBN(BayesianNetwork):
 
         Returns true on success, false otherwise.
         '''
-        for (node, node_t) in self.__initial_nodes:
-            if node.name == node_name:
-                return True
-        return False
+        return node_name in [node.name for (node, _) in self._initial_nodes]
