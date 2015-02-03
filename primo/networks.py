@@ -1,3 +1,24 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# This file is part of PRIMO -- Probabilistic Inference Modules.
+# Copyright (C) 2013-2015 Social Cognitive Systems Group, 
+#                         Faculty of Technology, Bielefeld University
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the Lesser GNU General Public License as 
+# published by the Free Software Foundation, either version 3 of the 
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public 
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+
 import networkx as nx
 
 import primo.densities
@@ -297,6 +318,19 @@ class DynamicBayesianNetwork(BayesianNetwork):
         next_tslice = self._twoTBN.create_timeslice(state, True if self._t == 0 else False)
         self._twoTBN = next_tslice
         self._t += 1
+
+    def inference(self, evidence=None):
+        state = {}
+        if self._t == 0:
+            ft = primo.inference.factor.FactorTreeFactory().create_greedy_factortree(self._B0)
+            state_vars = [self._B0.get_node(n.name) for (_, n) in self._twoTBN.get_initial_nodes()]
+        else:
+            ft = primo.inference.factor.FactorTreeFactory().create_greedy_factortree(self._twoTBN)
+            state_vars = [nt for (_, nt) in self._twoTBN.get_initial_nodes()]
+        ft.set_evidence(evidence)
+        for var in state_vars:
+            state[var] = ft.calculate_marginal([var]).table
+        return state
 
     def is_valid(self):
         '''Check if graph structure is valid. And if there is a same-named
