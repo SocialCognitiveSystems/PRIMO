@@ -29,6 +29,7 @@ class BayesianNetwork(object):
         super(BayesianNetwork, self).__init__()
         self.graph = nx.DiGraph()
         self.node_lookup = {}
+        self.name = "" #Only used to be compatible with XMLBIF
 
     def add_node(self, node):
         if isinstance(node, primo.nodes.RandomNode):

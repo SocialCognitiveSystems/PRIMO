@@ -132,6 +132,17 @@ class DiscreteNode(unittest.TestCase):
         np.testing.assert_array_equal(n.get_probability("Value1"), np.array([0.2,0.3,0.4]))
         # Get only the specified probability 
         self.assertEqual(n.get_probability("Value1", {"Node2": ["Value4"]}),0.3)
+        np.testing.assert_array_equal(n.get_probability("Value1", {"Node2":["Value3", "Value5"]}), np.array([0.2,0.4]))
+        
+        
+        n1 = nodes.DiscreteNode("sprinkler")
+        n2 = nodes.DiscreteNode("rain")
+        n3 = nodes.DiscreteNode("wet_grass")
+        n3.add_parent(n1)
+        n3.add_parent(n2)
+        cpt = np.array([[[0.95, 0.1],[0.8,0.0]], [[0.05, 0.9],[0.2, 1.0]]])
+        n3.set_cpd(cpt)
+        self.assertEqual(n3.get_probability("False", {"rain":["True"], "sprinkler":["False"]}),0.2)
         
     def test_get_probability_error(self):
         n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
