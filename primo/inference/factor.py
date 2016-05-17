@@ -19,7 +19,8 @@ class Factor(object):
     
     def __init__(self):
         self.table = np.array([])
-         # Use a dictionary that stores the variables as keys and their corresponding dimensions as values
+         # Use a dictionary that stores the variable names as 
+        # keys and their corresponding dimensions as values
         self.variables = {}
         # Use a dictionary for the value lists with the variables as keys.
         self.values = {}
@@ -54,6 +55,45 @@ class Factor(object):
             res.values[p] = copy.copy(node.parents[p].values)
         return res
         
+    @classmethod
+    def as_evidence(cls, variable, values, evidence):
+        """
+            Creates an "evidence factor" which is used to introduce hart and
+            soft evidence into the inference algorithms.
+            
+            Parameters
+            ---------
+            variable: String
+                The name of the variable that this evidence is given for.
+            values: [String,]
+                List of possible values/outcomes of that variable
+            evidence: String or np.array
+                The actual evidence that was observed. If a string is given,
+                hard evidence is assumed for that given outcome. Otherwise,
+                the evidence is set according to the given array. The probabilities
+                in the array need to be in the same order as given in the values
+                
+            Returns
+            -------
+                Factor
+                A factor for the given evidence variable containing potentials
+                according to the strength of the evidence.
+        """
+        res = cls()
+        res.variableOrder.append(variable)
+        res.variables[variable] = 0
+        res.values[variable] = copy.copy(values)
+        if not hasattr(evidence, '__iter__'):
+            if not evidence in values:
+                raise ValueError("Evidence {} is not one of the possible values ({}) for this variable.".format(evidence, values))
+            res.table = np.zeros(len(values))
+            res.table[values.index(evidence)] = 1.0
+        else:
+            if len(evidence) != len(values):
+                raise ValueError("The number of evidence strength ({}) does not correspont to the number of values ({})".format(len(evidence),len(values)))
+            res.table = np.copy(evidence)
+        return res
+        
     def __mul__(self, other):
         """
             Allows multiplication of two factors. Will not modify the two
@@ -64,6 +104,10 @@ class Factor(object):
             factor and any new variables in the other factor are added afterwards!
             They will however be added in the same order as they have been in
             the other factor.
+            
+            Also value order is currently NOT checked between the two factors,
+            i.e. if one factor orders the values of some variable as "True", "False"
+            and another sorts them "False", "True" the results will be wrong!
             
             Paramter
             -------
@@ -143,3 +187,46 @@ class Factor(object):
             res.variables[v] = idx
             
         return res
+        
+    def get_potential(self, variables={}):
+        """
+            Function that allows to query for specifiy potentials within this 
+            factor. IMPORTANT: This potential is not necessary a probability.
+            
+            Even if probabilities are represented, these potentials could 
+            be conditional probabilities or joint probabilities of different
+            variables.
+            
+            If variables is not given, will simply return the full potential table.
+            
+            Parameter
+            ---------
+            variables: dict, optional.
+                Dictionary containing the desired variable names as keys and
+                a list of instantiations of interest as values.
+                
+            Returns
+            -------
+                np.array
+                The currently stored potential for the given variables and their values.
+        """
+        if len(variables) == 0:
+            return self.table
+        
+        index = []        
+        for v in self.variableOrder:
+            if v in variables:
+                try:
+                    index.append([self.values[v].index(value) for value in variables[v]])
+                except ValueError:
+                    raise ValueError("There is no potential for variable {} with values {} in this factor.".format(v, variables[v]))
+                  
+        return np.squeeze(np.copy(self.table[index]))
+        
+    def normalize(self):
+        """
+            Normalizes the included potential so that they add up to 1. Should
+            mainly be used internally when computing posterior marginals!
+        """
+        
+        self.table /= np.sum(self.table)

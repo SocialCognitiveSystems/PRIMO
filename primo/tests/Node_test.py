@@ -150,7 +150,7 @@ class DiscreteNode(unittest.TestCase):
         n.add_parent(n2)
         with self.assertRaises(ValueError) as cm:
             n.get_probability("Value3")
-        self.assertEqual(str(cm.exception), "The node as no value {}".format("Value3"))
+        self.assertEqual(str(cm.exception), "This node as no value {}".format("Value3"))
         
         with self.assertRaises(ValueError) as cm:
             n.get_probability("Value1", {"Node3": ["Value4"]})

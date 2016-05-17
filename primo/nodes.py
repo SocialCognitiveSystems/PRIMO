@@ -48,6 +48,12 @@ class RandomNode(object):
             instantiation or their name.
         """
         return hash(self.name)
+        
+    def __str__(self):
+        return self.name
+        
+    def __repr__(self):
+        return self.name
 
 
 class DiscreteNode(RandomNode):
@@ -60,7 +66,7 @@ class DiscreteNode(RandomNode):
             ----------
             nodename: String
                 The name which is used to reference this node
-            vales: [String,]
+            vales: [String,], optional
                 List of outcome values this discrete node has.
         """
         super(DiscreteNode,self).__init__(nodename)
@@ -150,7 +156,7 @@ class DiscreteNode(RandomNode):
             ---------
             value: String
                 The value for which the probability should be returned.
-            parentValues: Dict
+            parentValues: Dict, optional
                 A dictionary with the parent names as keys and lists containing
                 the values of that parent that should be included.
             
@@ -161,13 +167,13 @@ class DiscreteNode(RandomNode):
         """
         try:
             index = [[self.values.index(value)]]
-        except:
-            raise ValueError("The node as no value {}".format(value))
+        except ValueError:
+            raise ValueError("This node as no value {}".format(value))
         
         for parentName in parentValues.iterkeys():
             try:
                 index.append([self.parents[parentName].values.index(v) for v in parentValues[parentName]])
-            except:
+            except KeyError:
                 raise ValueError("There is no conditional probability for parent {}, values {}.".format(parentName, parentValues[parentName]))
         return np.squeeze(np.copy(self.cpd[index]))
             

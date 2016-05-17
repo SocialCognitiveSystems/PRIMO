@@ -56,6 +56,9 @@ class BayesianNetwork(object):
 
     def get_all_nodes(self):
         return self.graph.nodes()
+        
+    def get_all_node_names(self):
+        return self.node_lookup.keys()
 
     def get_nodes(self, node_names=[]):
         nodes = []

@@ -15,9 +15,6 @@ class FactorTest(unittest.TestCase):
 
 
     def setUp(self):
-#        cptA = np.array([0.6,0.4])
-#        cptB_A = np.array([[0.9, 0.2],[0.1,0.8]])
-#        cptC_B = np.array([[0.3,0.5], [0.7,0.5]])
         self.n1 = DiscreteNode("Node1")
         cpt1 = np.array([0.3,0.7])
         self.n1.set_cpd(cpt1)
@@ -51,6 +48,18 @@ class FactorTest(unittest.TestCase):
             for v in self.n2.parents[p].values:
                 self.assertTrue(v in f.values[p])
         
+    def test_as_evidence(self):
+        f = Factor.as_evidence("E", ["True","False"], "True")
+        np.testing.assert_array_almost_equal(f.table, np.array([1.0,0.0]))
+        f = Factor.as_evidence("E", ["True","False"], np.array([0.8,0.2]))
+        np.testing.assert_array_almost_equal(f.table, np.array([0.8,0.2]))
+        with self.assertRaises(ValueError) as cm:
+            f = Factor.as_evidence("E", ["True","False"], "NotThere")
+        self.assertEqual(str(cm.exception), "Evidence NotThere is not one of the possible values (['True', 'False']) for this variable.")
+        with self.assertRaises(ValueError) as cm:
+            f = Factor.as_evidence("E", ["True","False"], np.array([0.1,0.2,0.3]))
+        self.assertEqual(str(cm.exception), "The number of evidence strength (3) does not correspont to the number of values (2)")
+                
 
     def test_multiplication_conditionals(self):
         """
@@ -143,6 +152,39 @@ class FactorTest(unittest.TestCase):
         
 #    def test_division(self):
 #        self.fail("TODO")
+        
+    def test_get_potential(self):
+        """
+            Factors contains "potentials" for each variable instantiation
+            that it is responsible for. These potentials can be probabilities
+            which might be interesting to the user.
+        """
+        f1 = Factor.from_node(self.n1)
+        np.testing.assert_array_almost_equal(f1.get_potential(), np.array([0.3,0.7]))
+        
+        #TODO consider changing API of get_potential (maybe allow convencience shortcut to variable:value)
+        self.assertEqual(f1.get_potential({"Node1": ["True"]}), 0.3)
+        
+        f2 = Factor.from_node(self.n2)
+        # Test getting a subset of the potentials. IMPORTANT: This does not
+        # need to be a probability. Even if these are probabilities they might
+        # be conditional probabilities (i.e. P(Node1=True|Node2=ValueB) and 
+        # P(Node1=True|Node2=ValueC)) but it could also be the joint
+        # pobabilities (i.e P(Node1=True, Node2=ValueB) and P(Node1=True, Node2=ValueC))
+        np.testing.assert_array_almost_equal(f2.get_potential({"Node1": ["True"], "Node2":["ValueB", "ValueC"]}), np.array([0.4,0.4]))
+        
+        with self.assertRaises(ValueError) as cm:
+            f2.get_potential({"Node1":["False"], "Node2": ["ValueNotThere"]})
+        self.assertEqual(str(cm.exception), "There is no potential for variable Node2 with values ['ValueNotThere'] in this factor.")
+        
+    def test_normalize(self):
+        
+        f1 = Factor.from_node(self.n2)
+        # Disturb the table
+        f1.table *= 2
+        self.assertNotEqual(np.sum(f1.table), 1.0)
+        f1.normalize()
+        self.assertEqual(np.sum(f1.table), 1.0)
     
     
 if __name__ == "__main__":
