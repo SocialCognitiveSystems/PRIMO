@@ -7,6 +7,7 @@ Created on Tue May 17 10:24:51 2016
 """
 
 import copy
+import networkx as nx
 from operator import itemgetter
 from primo.network import BayesianNetwork
 
@@ -37,26 +38,36 @@ class Orderer(object):
         if not isinstance(bn, BayesianNetwork):
             raise TypeError("Only Bayesian Networks are currently supported.")
         
-        
-        succs = copy.copy(bn.graph.succ)
-        preds = copy.copy(bn.graph.pred)
-        adjs = {n: list(succs[n])+list(preds[n]) for n in succs.keys()}
-        
-        
-        variables = bn.get_all_node_names()
-        res = []
-        for i in range(len(variables)):
-            degrees = {n: len(adjs) for n in adjs.keys()}
+        interactionG = bn.graph.to_undirected()
+        res = []        
+        for i in range(len(bn.get_all_node_names())):
+            degrees = interactionG.degree()
             varToElim = sorted(degrees.items(), key=itemgetter(1))[0][0]
-            res.append(varToElim)
-            del degrees[varToElim]
-            for neigh1 in adjs[varToElim]:
-                for neigh2 in adjs[varToElim]:
-                    if neigh1 != neigh2:
-                        if neigh1 not in adjs[neigh2]:
-                            adjs[neigh1].append(neigh2)
-                            ajds[neigh2].append(neigh1)
-            del adjs[varToElim]
+            res.append(varToElim.name)
+            for p in varToElim.parents:
+                for p2 in varToElim.parents:
+                    if p != p2:
+                        interactionG.add_edge(varToElim.parents[p], varToElim.parents[p2])
+            interactionG.remove_node(varToElim)
+#        succs = copy.copy(bn.graph.succ)
+#        preds = copy.copy(bn.graph.pred)
+#        adjs = {n: list(succs[n])+list(preds[n]) for n in succs.keys()}
+#        print adjs
+#        
+#        variables = bn.get_all_node_names()
+#        res = []
+#        for i in range(len(variables)):
+#            degrees = {n: len(adjs) for n in adjs.keys()}
+#            varToElim = sorted(degrees.items(), key=itemgetter(1))[0][0]
+#            res.append(varToElim.name)
+#            del degrees[varToElim]
+#            for neigh1 in adjs[varToElim]:
+#                for neigh2 in adjs[varToElim]:
+#                    if neigh1 != neigh2:
+#                        if neigh1 not in adjs[neigh2]:
+#                            adjs[neigh1].append(neigh2)
+#                            adjs[neigh2].append(neigh1)
+#            del adjs[varToElim]
         return res
 
     @staticmethod

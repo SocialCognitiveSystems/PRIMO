@@ -18,13 +18,34 @@ class Factor(object):
     """
     
     def __init__(self):
-        self.table = np.array([])
+        self.potentials = np.array([])
          # Use a dictionary that stores the variable names as 
         # keys and their corresponding dimensions as values
         self.variables = {}
         # Use a dictionary for the value lists with the variables as keys.
         self.values = {}
         self.variableOrder = []
+        
+        
+    @classmethod
+    def get_trivial(cls, potential=1.0):
+        """
+            Helper function to create a trivial factor with a given potential.
+            A trivial factor does not represent any variables anymore.
+            
+            Parameter
+            ---------
+            potential : Float, optional
+                The potential this factor should be initialized with.
+                
+            Returns
+            -------
+                Factor
+                The resulting trivial factor.
+        """
+        res = cls()
+        res.potentials = potential
+        return res
         
     @classmethod
     def from_node(cls, node):
@@ -48,7 +69,7 @@ class Factor(object):
         res.variables[node.name] = len(res.variables)
         res.variableOrder.append(node.name)
         res.values[node.name] = copy.copy(node.values)
-        res.table = np.copy(node.cpd)
+        res.potentials = np.copy(node.cpd)
         for p in node.parentOrder:
             res.variables[p] = len(res.variables)
             res.variableOrder.append(p)
@@ -86,12 +107,12 @@ class Factor(object):
         if not hasattr(evidence, '__iter__'):
             if not evidence in values:
                 raise ValueError("Evidence {} is not one of the possible values ({}) for this variable.".format(evidence, values))
-            res.table = np.zeros(len(values))
-            res.table[values.index(evidence)] = 1.0
+            res.potentials = np.zeros(len(values))
+            res.potentials[values.index(evidence)] = 1.0
         else:
             if len(evidence) != len(values):
                 raise ValueError("The number of evidence strength ({}) does not correspont to the number of values ({})".format(len(evidence),len(values)))
-            res.table = np.copy(evidence)
+            res.potentials = np.copy(evidence)
         return res
         
     def __mul__(self, other):
@@ -123,32 +144,58 @@ class Factor(object):
         f1 = copy.deepcopy(self)
         f2 = copy.deepcopy(other)
         
+        # Shortcuts for trivial factors
+        if len(f1.variables) == 0:
+            f2.potentials = f1.potentials * f2.potentials
+            return f2
+            
+        if len(f2.variables) == 0:
+            f1.potentials = f1.potentials * f2.potentials
+            return f1
+        
         #Extend factor 1 by all the variables it is missing
         for v in other.variableOrder:
             if not v in f1.variables:
-                ax = f1.table.ndim
+                ax = f1.potentials.ndim
                 f1.variables[v] = ax
                 f1.values[v] = copy.copy(other.values[v])
-                f1.table = np.expand_dims(f1.table, axis = ax)
-                f1.table = np.repeat(f1.table, len(other.values[v]), axis = ax)
+                f1.potentials = np.expand_dims(f1.potentials, axis = ax)
+                f1.potentials = np.repeat(f1.potentials, len(other.values[v]), axis = ax)
                 f1.variableOrder.append(v)
                 
-        
+#        print "f1.variableOrder: ", f1.variableOrder
+#        print "f1 potentials: ", f1.potentials
+#        print "f2 variableOrder before: ", f2.variableOrder
         # Ensure factor2 has the same size as factor1
         for v in f1.variableOrder:
             if not v in f2.variables:
-                f2.table = np.expand_dims(f2.table, f1.variables[v])
-                f2.table = np.repeat(f2.table, len(f1.values[v]), axis = f1.variables[v])
+                f2.potentials = np.expand_dims(f2.potentials, f1.variables[v])
+                f2.potentials = np.repeat(f2.potentials, len(f1.values[v]), axis = f1.variables[v])
+#                print "inserting {} at {}".format(v, f1.variables[v])
+                #Fix variable order!
                 f2.variableOrder.insert(f1.variables[v], v)
+                for idx, v in enumerate(f2.variableOrder):
+                    f2.variables[v] = idx
             else:
                 #Roll axes around so that they align. Cannot use f2.variables[v] since
                 # new axes might have been inserted in the meantime
-                f2.table = np.rollaxis(f2.table, f2.variableOrder.index(v), f1.variables[v])
+#                print "rollaxis for {} from {} to {}".format(v, f2.variableOrder.index(v), f1.variables[v])
+#                print "potentials before: ", f2.potentials
+                f2.potentials = np.rollaxis(f2.potentials, f2.variableOrder.index(v), f1.variables[v])
+                
+                f2.variableOrder.remove(v)
+                f2.variableOrder.insert(f1.variables[v], v)
+                for idx, v in enumerate(f2.variableOrder):
+                    f2.variables[v] = idx
+
+#        print "f2.variableOrder: ", f2.variableOrder
+#        print "f2 potentials: ", f2.potentials
+#        print "f1 potentials: ", f1.potentials                
                 
         # Pointwise multiplication which results in a factor where all instantiations
         # are compatible to the instantiations of factor1 and factor2
         # See Definition 6.3 in "Modeling and Reasoning with Bayesian Networks" - Adnan Darwiche Chapter 6
-        f1.table = f1.table * f2.table
+        f1.potentials = f1.potentials * f2.potentials
 
         return f1
     
@@ -177,7 +224,7 @@ class Factor(object):
             
         res = copy.deepcopy(self)
         for v in variables:
-            res.table = np.sum(res.table, axis=res.variableOrder.index(v))
+            res.potentials = np.sum(res.potentials, axis=res.variableOrder.index(v))
             del res.values[v]
             res.variableOrder.remove(v)
             
@@ -210,8 +257,7 @@ class Factor(object):
                 np.array
                 The currently stored potential for the given variables and their values.
         """
-        if len(variables) == 0:
-            return self.table
+        
         
         index = []        
         for v in self.variableOrder:
@@ -220,8 +266,13 @@ class Factor(object):
                     index.append([self.values[v].index(value) for value in variables[v]])
                 except ValueError:
                     raise ValueError("There is no potential for variable {} with values {} in this factor.".format(v, variables[v]))
+            else:
+                index.append(range(len(self.values[v])))
+                    
+        if len(variables) == 0:
+            return self.potentials
                   
-        return np.squeeze(np.copy(self.table[index]))
+        return np.squeeze(np.copy(self.potentials[np.ix_(*index)]))
         
     def normalize(self):
         """
@@ -229,4 +280,4 @@ class Factor(object):
             mainly be used internally when computing posterior marginals!
         """
         
-        self.table /= np.sum(self.table)
+        self.potentials /= np.sum(self.potentials)

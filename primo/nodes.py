@@ -49,9 +49,9 @@ class RandomNode(object):
         """
         return hash(self.name)
         
-    def __str__(self):
-        return self.name
-        
+#    def __str__(self):
+#        return self.name
+#        
     def __repr__(self):
         return self.name
 
@@ -159,6 +159,7 @@ class DiscreteNode(RandomNode):
             parentValues: Dict, optional
                 A dictionary with the parent names as keys and lists containing
                 the values of that parent that should be included.
+                Variables that are not a parent of this node will be ignored.
             
             Returns
             -------
@@ -170,11 +171,16 @@ class DiscreteNode(RandomNode):
         except ValueError:
             raise ValueError("This node as no value {}".format(value))
         
-        for parentName in parentValues.iterkeys():
-            try:
-                index.append([self.parents[parentName].values.index(v) for v in parentValues[parentName]])
-            except KeyError:
-                raise ValueError("There is no conditional probability for parent {}, values {}.".format(parentName, parentValues[parentName]))
-        return np.squeeze(np.copy(self.cpd[index]))
+        for parentName in self.parentOrder:
+            if parentName in parentValues:
+                try:
+                    index.append([self.parents[parentName].values.index(v) for v in parentValues[parentName]])
+                except ValueError:
+                    raise ValueError("There is no conditional probability for parent {}, values {}.".format(parentName, parentValues[parentName]))
+            else:
+                index.append(range(len(self.parents[parentName].values)))
+                
+        # use np.ix_ to construct the appropriate index array!
+        return np.squeeze(np.copy(self.cpd[np.ix_(*index)]))
             
         

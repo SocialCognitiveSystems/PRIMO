@@ -27,7 +27,7 @@ class XMLBIFParser(object):
         bn.name = root.find(".//NAME").text
         for var in root.iter("VARIABLE"):
             curName = var.find("./NAME").text
-            values = var.findall("./OUTCOME")
+            values = [outcome.text for outcome in var.findall("./OUTCOME")]
             curNode = DiscreteNode(curName, values) 
             
             bn.add_node(curNode)
@@ -39,7 +39,8 @@ class XMLBIFParser(object):
             # Table in that order. Remember to do the same inversion when writing
             # to a file!!
             for given in reversed(definition.findall("./GIVEN")):
-                curNode.add_parent(bn.get_node(given.text))
+#                curNode.add_parent(bn.get_node(given.text))
+                bn.add_edge(given.text, curName)
                 
             table = np.array(map(float, definition.find("./TABLE").text.strip().split(" ")))
             shape = [len(curNode.values)]

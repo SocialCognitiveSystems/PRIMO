@@ -143,6 +143,18 @@ class DiscreteNode(unittest.TestCase):
         cpt = np.array([[[0.95, 0.1],[0.8,0.0]], [[0.05, 0.9],[0.2, 1.0]]])
         n3.set_cpd(cpt)
         self.assertEqual(n3.get_probability("False", {"rain":["True"], "sprinkler":["False"]}),0.2)
+        self.assertEqual(n3.get_probability("True", {"rain":["False"], "sprinkler":["True"]}),0.1)
+
+        # Check other parent order!        
+        n1 = nodes.DiscreteNode("sprinkler")
+        n2 = nodes.DiscreteNode("rain")
+        n3 = nodes.DiscreteNode("wet_grass")
+        n3.add_parent(n2)
+        n3.add_parent(n1)
+        cpt = np.array([[[0.95, 0.8],[0.1, 0.0]],[[0.05, 0.2], [0.9, 1.0]]])
+        n3.set_cpd(cpt)
+        self.assertEqual(n3.get_probability("False", {"rain":["True"], "sprinkler":["False"]}),0.2)
+        self.assertEqual(n3.get_probability("True", {"rain":["False"], "sprinkler":["True"]}),0.1)
         
     def test_get_probability_error(self):
         n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
@@ -153,8 +165,20 @@ class DiscreteNode(unittest.TestCase):
         self.assertEqual(str(cm.exception), "This node as no value {}".format("Value3"))
         
         with self.assertRaises(ValueError) as cm:
-            n.get_probability("Value1", {"Node3": ["Value4"]})
-        self.assertEqual(str(cm.exception), "There is no conditional probability for parent {}, values {}.".format("Node3", "['Value4']"))
+            n.get_probability("Value1", {"Node2": ["Value6"]})
+        self.assertEqual(str(cm.exception), "There is no conditional probability for parent {}, values {}.".format("Node2", "['Value6']"))
+        
+        
+    def test_get_probability_multiple_parents(self):
+        wet = nodes.DiscreteNode("wet_grass")
+        sprink = nodes.DiscreteNode("sprinkler")
+        rain = nodes.DiscreteNode("rain")
+        wet.add_parent(sprink)
+        wet.add_parent(rain)
+        cpt = np.array([[[0.95, 0.1],[0.8,0.0]],[[0.5,0.9],[0.2,1.0]]])
+        wet.set_cpd(cpt)
+        np.testing.assert_array_almost_equal(wet.get_probability("True", {"sprinkler":["True","False"], "rain":["True","False"]}),cpt[0,:,:])
+        
         
 #    def test_addParents(self):
 #        pass

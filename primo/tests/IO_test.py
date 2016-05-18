@@ -38,9 +38,12 @@ class XMLBIFTest(unittest.TestCase):
         wetNode = bn.get_node("wet_grass")
         self.assertTrue("sprinkler" in wetNode.parents)
         self.assertTrue("rain" in wetNode.parents)
+        self.assertTrue("true" in wetNode.values)
         cpt = np.array([[[0.95, 0.8],[0.1,0.0]], [[0.05, 0.2],[0.9, 1.0]]])
+        self.assertEqual(wetNode.get_probability("false", {"rain":["true"], "sprinkler":["false"]}),0.2)
+        self.assertEqual(wetNode.get_probability("true", {"rain":["false"], "sprinkler":["true"]}),0.1)
         
-        np.testing.assert_array_almost_equal(wetNode.cpd, cpt)
+#        np.testing.assert_array_almost_equal(wetNode.cpd, cpt)
         
     def test_readXMLBIF_different_parent_sizes(self):
         bn = XMLBIFParser.parse("primo/tests/testfile.xbif")

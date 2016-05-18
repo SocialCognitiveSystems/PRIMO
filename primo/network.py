@@ -40,12 +40,12 @@ class BayesianNetwork(object):
         else:
             raise TypeError("Only subclasses of RandomNode are valid nodes.")
 
-#    def add_edge(self, node_from, node_to):
-#        if node_from in self.graph and node_to in self.graph:
-#            self.graph.add_edge(node_from, node_to)
-#            node_to.announce_parent(node_from)
-#        else:
-#            raise Exception("Tried to add an Edge between two Nodes of which at least one was not contained in the Bayesnet")
+    def add_edge(self, fromName, toName):
+        if fromName in self.graph and toName in self.graph:
+            self.graph.add_edge(self.node_lookup[fromName], self.node_lookup[toName])
+            self.node_lookup[toName].add_parent(self.node_lookup[fromName])
+        else:
+            raise Exception("Tried to add an Edge between two Nodes of which at least one was not contained in the Bayesnet")
 
 
     def get_node(self, node_name):

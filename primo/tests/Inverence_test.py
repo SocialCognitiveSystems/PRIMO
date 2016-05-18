@@ -11,7 +11,8 @@ import numpy as np
 from primo.network import BayesianNetwork
 from primo.io import XMLBIFParser
 from primo.inference.order import Orderer
-from primo.inference.exact import BucketElimination
+from primo.inference.exact import VariableElimination
+from primo.inference.exact import FactorTree
 
 class EliminationOderTest(unittest.TestCase):
     
@@ -45,18 +46,65 @@ class VariableEliminationTest(unittest.TestCase):
     
     def setUp(self):
         self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
-    
-    def test_marginal(self):
-        resFactor = BucketElimination.marginals(self.bn, ["winter"])
+        
+        
+    def test_naive_marginals(self):
+        resFactor = VariableElimination.naive_marginals(self.bn, ["winter"])
         np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.6, 0.4]))
         
+    def test_naive_marginal_evidence_trivial(self):
+        resFactor = VariableElimination.naive_marginals(self.bn, ["rain"], {"winter": "true"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.8, 0.2]))
         
-#    def test_marginal_evidence(self):
-#        resFactor = BucketElimination.marginals(self.bn, ["winter"])
-#        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.6, 0.4]))
+    def test_naive_marginal_evidence_trivial_multiple_evidence(self):
+        resFactor = VariableElimination.naive_marginals(self.bn, ["wet_grass"], {"sprinkler": "true", "rain": "false"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.1, 0.9]))
+        
+    def test_naive_marginal_evidence(self):
+        resFactor = VariableElimination.naive_marginals(self.bn, ["wet_grass"], {"winter": "true"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.668, 0.332]))
+        
+    def test_naive_marginal_evidence_multiple_evidence(self):
+        resFactor = VariableElimination.naive_marginals(self.bn, ["wet_grass"], {"winter": "true", "rain": "false"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.02, 0.98]))
+        
+
+        
+    def test_bucket_marginals(self):
+        resFactor = VariableElimination.bucket_marginals(self.bn, ["winter"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.6, 0.4]))
+#        
+    def test_bucket_marginal_evidence_trivial(self):
+        resFactor = VariableElimination.bucket_marginals(self.bn, ["rain"], {"wet_grass": "false"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.158858, 0.841142]))
+        
+    def test_bucket_marginal_evidence_trivial_multiple_evidence(self):
+        resFactor = VariableElimination.bucket_marginals(self.bn, ["wet_grass"], {"sprinkler": "true", "rain": "false"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.1, 0.9]))
+    
+        
+    def test_bucket_marginal_evidence(self):
+        resFactor = VariableElimination.bucket_marginals(self.bn, ["wet_grass"], {"winter": "true"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.668, 0.332]))
+        
+    def test_bucket_marginal_evidence_multiple_evidence(self):
+        resFactor = VariableElimination.bucket_marginals(self.bn, ["wet_grass"], {"winter": "true", "rain": "false"})
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.02, 0.98]))
+        
+    ### TODO check multiple marginals
+#    def test_bucket_multiple_marginals(self):
+#        resFactor = VariableElimination.bucket_marginals(self.bn, ["wet_grass", "rain"], {"winter": "true", "slippery_road": "false"})
         
         
 class FactorEliminationTest(unittest.TestCase):
+    
+    
+    def setUp(self):
+        self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        
+    def test_create_jointree(self):
+        ft = FactorTree.create_jointree(self.bn)
+        
 #    
 #    def test_marginal(self):
 #        self.fail("TODO")
