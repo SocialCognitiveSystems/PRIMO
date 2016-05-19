@@ -41,7 +41,12 @@ bn.add_edge(sprinkler,"wet_grass") #Nodes and their names can usually both be us
 bn.add_edge("rain", "wet_grass")
 bn.add_edge("rain", "slippery_road")
 
-#Assign cpts
+# Assign cpts
+# CPTS can only be set after the parental structure as been determined since
+# the nodes check if the given shape of the array is correct.
+# CPTS are numpy arrays with one dimension for each variable, meaning that
+# the first dimension is used for the values of the variable itself and
+# all the others for the parents of that variable
 winter.set_cpd(np.array([0.6,0.4]))
 rain.set_cpd(np.array([[0.8, 0.1],[0.2,0.9]]))
 sprinkler.set_cpd(np.array([[0.2,0.75],[0.8,0.25]]))
