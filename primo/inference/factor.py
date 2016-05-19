@@ -115,6 +115,51 @@ class Factor(object):
             res.potentials = np.copy(evidence)
         return res
         
+    def __div__(self, other):
+        """
+            Allows division of two factors. Currently other can only be a 
+            trivial factor or a factor containing the same variables as this
+            one!
+            
+            Parameter
+            --------
+            other : Factor
+                The factor that this factor is divided with.
+                
+            Returns
+            -------
+                Factor
+                A new factor representing the quotient of the division.
+        """
+        
+        f1 = copy.deepcopy(self)
+        f2 = copy.deepcopy(other)
+            
+        if len(f2.variables) == 0:
+            with np.errstate(divide='ignore'):
+                f1.potentials = f1.potentials / f2.potentials
+                f1.potentials[f1.potentials==np.inf] = 0
+            return f1
+        
+        if set(f1.variableOrder) != set(f2.variableOrder):
+            raise ValueError("The divisor has different variables than the dividend.")
+            
+        if f1.variableOrder != f2.variableOrder:
+            #Turn f2 variables to match those of f1
+            for v in f1.variableOrder:
+                f2.potentials = np.rollaxis(f2.potentials, f2.variableOrder.index(v), f1.variables[v])
+                # Fix f2 variable order for further variables
+                f2.variableOrder.remove(v)
+                f2.variableOrder.insert(f1.variables[v], v)
+                for idx, v in enumerate(f2.variableOrder):
+                    f2.variables[v] = idx
+                    
+        with np.errstate(divide='ignore'):
+            f1.potentials = f1.potentials / f2.potentials
+            f1.potentials[f1.potentials==np.inf] = 0
+        return f1           
+        
+        
     def __mul__(self, other):
         """
             Allows multiplication of two factors. Will not modify the two

@@ -104,14 +104,45 @@ class FactorEliminationTest(unittest.TestCase):
         
     def test_create_jointree(self):
         ft = FactorTree.create_jointree(self.bn)
+        desiredCliques = ["slippery_roadrain", "wet_grasssprinklerrain", "sprinklerwinterrain"]
+        self.assertEqual(len(ft.tree), 3)
+        for n in ft.tree.nodes_iter():
+            self.assertTrue(n in desiredCliques)
         
-#    
-#    def test_marginal(self):
-#        self.fail("TODO")
+    def test_jointree_marginals(self):
+        ft = FactorTree.create_jointree(self.bn)
+        resFactor = ft.marginals(["winter"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.6, 0.4]))
+        
+    def test_jointree_marginals(self):
+        ft = FactorTree.create_jointree(self.bn)
+        resFactor = ft.marginals(["slippery_road"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.364, 0.636]))
 #        
-#    def test_marginal_evidence(self):
-#        self.fail("TODO")
-    pass
+    def test_jointree_evidence_trivial(self):
+        ft = FactorTree.create_jointree(self.bn)
+        ft.set_evidence({"wet_grass": "false"})
+        resFactor = ft.marginals(["rain"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.158858, 0.841142]))
+        
+    def test_jointree_marginal_evidence_trivial_multiple_evidence(self):
+        ft = FactorTree.create_jointree(self.bn)
+        ft.set_evidence({"sprinkler": "true", "rain": "false"})
+        resFactor = ft.marginals(["wet_grass"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.1, 0.9]))
+    
+        
+    def test_jointree_marginal_evidence(self):
+        ft = FactorTree.create_jointree(self.bn)
+        ft.set_evidence({"winter": "true"})
+        resFactor = ft.marginals(["wet_grass"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.668, 0.332]))
+        
+    def test_jointree_marginal_evidence_multiple_evidence(self):
+        ft = FactorTree.create_jointree(self.bn)
+        ft.set_evidence( {"winter": "true", "rain": "false"})
+        resFactor = ft.marginals(["wet_grass"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.02, 0.98]))
         
         
 if __name__ == "__main__":

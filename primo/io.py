@@ -13,10 +13,7 @@ from primo.network import BayesianNetwork
 from primo.nodes import DiscreteNode
 
 class XMLBIFParser(object):
-    
-    def __init__(self):
-        pass
-    
+        
     @staticmethod
     def parse(filename):
         bn = BayesianNetwork()

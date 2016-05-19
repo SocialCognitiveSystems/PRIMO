@@ -61,6 +61,37 @@ class FactorTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "The number of evidence strength (3) does not correspont to the number of values (2)")
                 
                 
+    def test_division_with_trivial_factor(self):
+        
+        f1 = Factor.get_trivial()
+        f2 = Factor.from_node(self.n1)
+        f3 = f2 / f1
+        np.testing.assert_array_almost_equal(f3.potentials, self.n1.cpd) 
+        
+    def test_division_with_same_vars(self):
+        f1 = Factor.from_node(self.n2)
+        f2 = Factor.from_node(self.n2)
+        f3 = f1 / f2
+        np.testing.assert_array_almost_equal(f3.potentials, np.ones(self.n2.cpd.shape))  
+        
+    def test_division_with_zeros(self):
+        f1 = Factor.from_node(self.n2)
+        n2cpt = np.copy(self.n2.cpd)
+        n2cpt[0,0] = 0
+        self.n2.set_cpd(n2cpt)
+        n2cpt[:,:] = 1
+        n2cpt[0,0] = 0
+        f2 = Factor.from_node(self.n2)
+        f3 = f1 / f2
+        np.testing.assert_array_almost_equal(f3.potentials, n2cpt) 
+        
+    def test_division_different_vars(self):
+        f1 = Factor.from_node(self.n1)
+        f2 = Factor.from_node(self.n2)
+        with self.assertRaises(ValueError) as cm:
+            f3 = f2 / f1
+        self.assertEqual(str(cm.exception), "The divisor has different variables than the dividend.")
+                
     def test_multiplication_with_trivial_factor(self):
         """
             A factor may become trivial, i.e. not represent any variable anymore
@@ -133,7 +164,6 @@ class FactorTest(unittest.TestCase):
         
         f_wgEm = (f_wg * f_ev).marginalize("wet_grass")
         f_test = f_sp * f_wgEm
-        print f_test.potentials
         np.testing.assert_array_almost_equal(f_test.potentials, np.array([[[0.01, 0.18],[0.0375,0.675]], [[0.16, 0.8],[0.05,0.25]]]))
         
         

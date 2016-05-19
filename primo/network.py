@@ -69,15 +69,6 @@ class BayesianNetwork(object):
                 nodes.append(self.get_node(node_name))
         return nodes
 
-    def get_nodes_in_topological_sort(self):
-        return nx.topological_sort(self.graph)
-
-    def get_parents(self, node):
-        return self.graph.predecessors(node)
-
-    def get_children(self, node):
-        return self.graph.successors(node)
-
 
     def clear(self):
         '''Remove all nodes and edges from the graph.
