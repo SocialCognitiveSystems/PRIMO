@@ -60,6 +60,13 @@ print "Probability for sprinkler=True: ", res.get_potential({"sprinkler":["True"
 res = VariableElimination.naive_marginals(bn, ["sprinkler"], {"wet_grass":"True"})
 print "marginals for sprinkler, given wet_grass=True: ", res.potentials
 
+#Experimental: Soft evidence (not sure how to test that yet)
+# wet_grass is only true with a probability of 0.6
+res = VariableElimination.naive_marginals(bn, ["sprinkler"], {"wet_grass":np.array([0.6,0.4])}) 
+print "marginals for sprinkler, given wet_grass=0.6True: ", res.potentials
+
+
+
 # To use the junction tree algorithm, a tree is needed first:
 tree = FactorTree.create_jointree(bn)
 
