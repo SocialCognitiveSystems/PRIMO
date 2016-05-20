@@ -111,6 +111,53 @@ class DiscreteNode(unittest.TestCase):
         n.remove_parent(n2)
         self.assertFalse(n.valid)
         
+    def test_set_probability(self):
+        n = nodes.DiscreteNode("Node1")
+        n.set_probability("True", 0.2)
+        self.assertEqual(n.get_probability("True"), 0.2)
+        
+    def test_set_probability_with_parents(self):
+        n = nodes.DiscreteNode("Node1")
+        n2 = nodes.DiscreteNode("Node2")
+        n2.add_parent(n)
+        n2.set_probability("False", 0.4, {"Node1":"True"})
+        self.assertEqual(n2.get_probability("False", {"Node1":["True"]}), 0.4)
+        np.testing.assert_array_almost_equal(n2.cpd, np.array([[0.0,0.0],[0.4,0.0]]))
+        
+    def test_set_probability_with_underspecified_parents(self):
+        n = nodes.DiscreteNode("Node1")
+        n2 = nodes.DiscreteNode("Node2")
+        n2.add_parent(n)
+        n2.set_probability("True", 0.2)
+        np.testing.assert_array_almost_equal(n2.get_probability("True"), np.array([0.2,0.2]))
+        np.testing.assert_array_almost_equal(n2.cpd, np.array([[0.2,0.2],[0.0,0.0]]))
+        
+    def test_set_probability_with_multiple_parents(self):
+        n1 = nodes.DiscreteNode("Node1")
+        n2 = nodes.DiscreteNode("Node2")
+        n3 = nodes.DiscreteNode("Node3")
+        n3.add_parent(n1)
+        n3.add_parent(n2)
+        n3.set_probability("True", 0.5, {"Node1":"False", "Node2":"True"})
+        
+        np.testing.assert_array_almost_equal(n3.cpd, np.array([[[0.0,0.0],[0.5,0.0]],[[0.0,0.0],[0.0,0.0]]]))
+        n3.set_probability("False", 0.7, {"Node2":"False"})
+        np.testing.assert_array_almost_equal(n3.cpd, np.array([[[0.0,0.0],[0.5,0.0]],[[0.0,0.7],[0.0,0.7]]]))
+        
+    def test_set_probability_error(self):
+        n = nodes.DiscreteNode("Node1")
+        n2 = nodes.DiscreteNode("Node2")
+        n2.add_parent(n)
+        with self.assertRaises(ValueError) as cm:
+            n2.set_probability("False", 0.4, {"Node1":"NotThere"})
+        self.assertEqual(str(cm.exception), "Parent Node1 does not have values NotThere.")
+        
+    def test_set_probability_unknown_value(self):
+        n = nodes.DiscreteNode("Node1")
+        with self.assertRaises(ValueError) as cm:
+            n.set_probability("NotThere", 0.2)
+        self.assertEqual(str(cm.exception), "This node as no value NotThere.")
+        
     def test_get_probability(self):
         n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
         cpd = np.array([0.2,0.8])
@@ -162,7 +209,7 @@ class DiscreteNode(unittest.TestCase):
         n.add_parent(n2)
         with self.assertRaises(ValueError) as cm:
             n.get_probability("Value3")
-        self.assertEqual(str(cm.exception), "This node as no value {}".format("Value3"))
+        self.assertEqual(str(cm.exception), "This node as no value {}.".format("Value3"))
         
         with self.assertRaises(ValueError) as cm:
             n.get_probability("Value1", {"Node2": ["Value6"]})

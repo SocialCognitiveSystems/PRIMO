@@ -53,6 +53,20 @@ sprinkler.set_cpd(np.array([[0.2,0.75],[0.8,0.25]]))
 slip.set_cpd(np.array([[0.7,0.0],[0.3,1.0]]))
 wet.set_cpd(np.array([[[0.95, 0.1],[0.8,0.0]],[[0.05,0.9],[0.2,1.0]]]))
 
+
+# Probabilities can also be set individually. HOWEVER, be careful when using this,
+# as this will only affect the specified values and leave the others as they were!!
+
+winter.set_probability("True", 0.6)
+rain.set_probability("False", 0.2, {"winter":"True"})
+
+# Also only partially specifying the probability is possible:
+
+wet.set_probability("False", 0.2, {"rain":"True"})
+# This will result in P(w=False|rain=True, sprinkler=True) = 0.2 AND  #
+# P(w=False|rain=True, sprinkler=False) = 0.2!
+
+
 # Use an inference algorithm to compute desired marginals
 # Naive_marginals first computes the joint marginals over all variables
 # before summing out undesired variables
