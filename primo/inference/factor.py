@@ -280,7 +280,7 @@ class Factor(object):
             
         return res
         
-    def get_potential(self, variables={}):
+    def get_potential(self, variables=None):
         """
             Function that allows to query for specifiy potentials within this 
             factor. IMPORTANT: This potential is not necessary a probability.
@@ -303,6 +303,8 @@ class Factor(object):
                 The currently stored potential for the given variables and their values.
         """
         
+        if not variables:
+            variables = {}
         
         index = []        
         for v in self.variableOrder:

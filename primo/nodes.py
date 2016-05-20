@@ -58,7 +58,7 @@ class RandomNode(object):
 
 class DiscreteNode(RandomNode):
     
-    def __init__(self, nodename, values=["True", "False"]):
+    def __init__(self, nodename, values=("True", "False")):
         """
             Creates a new discrete node with the given name and outcomes.
             
@@ -70,7 +70,7 @@ class DiscreteNode(RandomNode):
                 List of outcome values this discrete node has.
         """
         super(DiscreteNode,self).__init__(nodename)
-        self.values = values #Consider copying this if for some reason something other than strings are used in there
+        self.values = list(values) #Consider copying this if for some reason something other than strings are used in there
         self.parents = dict() #Consider removing this
         self.parentOrder = []
         self.valid = False
@@ -140,7 +140,52 @@ class DiscreteNode(RandomNode):
         self.cpd = np.copy(cpd)
         self.valid = True
         
-    def get_probability(self, value, parentValues={}):
+    def set_probability(self, valueName, prob, parentValues=None):
+        """
+            Function that allows to set parts of the cpt of this variable.
+            IMPORTANT: Only the designated values are set, all other values
+            are left untouched, meaning that the resulting cpt might be 
+            invalid!! 
+            
+            Furthermore, if used underspecified, all corresponding entries in the
+            cpt will be set to the given value: E.g. consider the binary variable
+            A with binary parent B. Using A.set_probability("True", 0.4) will
+            adapt the cpt to  reflect 0.4 for P(A=True|B=True) AND P(A=True|B=False)
+            
+            Parameters
+            ----------
+            valueName : String
+                Name of the outcome that should be set.
+            prob : Float
+                Probability that should be adopted.
+            parentValues : Dict, optional
+                A dictionary with the parent names as keys and the name of the
+                corresponding value of that parent that the probability applies
+                to. If underspecified, the probability will be broadcasted to
+                all matching parent instantiations.
+                Parent names that do not belong to this node will be ignored.
+        """
+        try:
+            index = [self.values.index(valueName)]
+        except ValueError:
+            raise ValueError("This node as no value {}.".format(valueName))
+        
+        if not parentValues:
+            parentValues = {}
+        
+        for parentName in self.parentOrder:
+            if parentName in parentValues:
+                try:
+                    index.append(self.parents[parentName].values.index(parentValues[parentName]))
+                except ValueError:
+                    raise ValueError("Parent {} does not have values {}.".format(parentName, parentValues[parentName]))
+            else:
+                index.append(slice(len(self.parents[parentName].values)))
+                
+        self.cpd[tuple(index)] = prob
+        
+        
+    def get_probability(self, value, parentValues=None):
         """
             Function to return the probability(ies) for a given value of this
             random node. If all parent values are speciefied this will return
@@ -169,7 +214,10 @@ class DiscreteNode(RandomNode):
         try:
             index = [[self.values.index(value)]]
         except ValueError:
-            raise ValueError("This node as no value {}".format(value))
+            raise ValueError("This node as no value {}.".format(value))
+        
+        if not parentValues:
+            parentValues = {}
         
         for parentName in self.parentOrder:
             if parentName in parentValues:
@@ -182,5 +230,46 @@ class DiscreteNode(RandomNode):
                 
         # use np.ix_ to construct the appropriate index array!
         return np.squeeze(np.copy(self.cpd[np.ix_(*index)]))
+        
+    def sample_value(self, currentState, children):
+        """
+            Returns a value drawn from the probability density given by this node
+            with respect to the current state of the other nodes in the network.
+            Note: Only the current Markov blanket, i.e. this variable's parents
+            and children are required.
             
+            Parameter
+            ---------
+            currentState : dict
+                Dictionary containing RandomNodes as keys and their current instantiation
+                as value.
+                
+            children : [RandomNode,]
+                List of RandomNodes that have this node as parent.
+                
+            Returns
+            -------
+                String
+                Name of the value this DiscreteNode has most likely adopted.
+        """
+        #Compute probabilities of possible outcomes
+        weights = np.zeros(len(self.values))
+        for i, outcome in enumerate(self.values):
+#            prob = varToChange.get_probability(outcome, {parent: currentState[parent] for parent in varToChange.parents})
+#            for child in bn.get_children(varToChange):
+            #Initialise with conditional probability of this outcome given
+            #the parents' state
+            prob = self.get_probability(outcome, currentState)
+            #Multiply with children's conditional probabilities:
+            for child in children:
+                childParentDict = dict(currentState)
+                childParentDict[self] = outcome
+                prob *= child.get_probability(currentState[child], childParentDict)
+            weights[i] = prob
+        
+        #Perform roulette-wheel-sampling:
+        random = np.random.uniform(high = np.sum(weights))
+        for i in range(len(weights)):
+            if np.sum(weights[:i+1]) > random:
+                return self.values[i]
         

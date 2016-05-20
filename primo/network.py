@@ -68,6 +68,22 @@ class BayesianNetwork(object):
             for node_name in node_names:
                 nodes.append(self.get_node(node_name))
         return nodes
+        
+    def get_children(self, nodeName):
+        """
+            Returns a list of all the children of the given node.
+            
+            Parameter
+            --------
+            nodeName : String or RandomNode
+                The name of the node whose children are to be returned.
+                
+            Returns
+            -------
+                [RandomNode,]
+                A list containing all the nodes that have the given node as parent.
+        """
+        return self.graph.predecessors(nodeName)
 
 
     def clear(self):

@@ -14,7 +14,7 @@ class VariableElimination(object):
     
     
     @staticmethod
-    def naive_marginals(bn, variables, evidence={}):
+    def naive_marginals(bn, variables, evidence=None):
         """
             Function to compute the prior or posterior marginals given evidence
             from a given Bayesian Network for the variables and their 
@@ -42,6 +42,9 @@ class VariableElimination(object):
                 A factor containing the desired marginals
         """
         
+        if not evidence:
+            evidence = {}
+        
         order = bn.get_all_node_names()
         # Compute joint probability distribution of all variables
         resFactor = Factor.get_trivial()            
@@ -64,7 +67,7 @@ class VariableElimination(object):
         
     
     @staticmethod
-    def bucket_marginals(bn, variables, evidence={}, order=None):
+    def bucket_marginals(bn, variables, evidence=None, order=None):
         """
             Function to compute the prior or posterior marginals given evidence
             from a given Bayesian Network for the variables and their 
@@ -98,6 +101,9 @@ class VariableElimination(object):
         
         if not order:
             order = Orderer.get_min_degree_order(bn)
+            
+        if not evidence:
+            evidence = {}
         
         #Move query variables at the end of the order
         for v in variables:
