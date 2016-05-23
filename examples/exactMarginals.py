@@ -15,6 +15,10 @@ from primo.io import XMLBIFParser
 from primo.inference.exact import VariableElimination
 from primo.inference.exact import FactorTree
 
+from primo.inference.mcmc import MCMC
+
+import time
+
 #Load xmlbif 
 #bn = XMLBIFParser.parse("../primo/tests/slippery.xbif")
 
@@ -71,18 +75,18 @@ wet.set_probability("False", 0.2, {"rain":"True"})
 # Naive_marginals first computes the joint marginals over all variables
 # before summing out undesired variables
 res = VariableElimination.naive_marginals(bn, ["sprinkler"])
-print "marginals for sprinkler: ", res.potentials
+print "Marginals for sprinkler: ", res.potentials
 # The probability for a specific outcome can be queried as well
 print "Probability for sprinkler=True: ", res.get_potential({"sprinkler":["True"]})
 
 #Posterior marginals can also be queried
 res = VariableElimination.naive_marginals(bn, ["sprinkler"], {"wet_grass":"True"})
-print "marginals for sprinkler, given wet_grass=True: ", res.potentials
+print "Marginals for sprinkler, given wet_grass=True: ", res.potentials
 
 #Experimental: Soft evidence (not sure how to test that yet)
 # wet_grass is only true with a probability of 0.6
 res = VariableElimination.naive_marginals(bn, ["sprinkler"], {"wet_grass":np.array([0.6,0.4])}) 
-print "marginals for sprinkler, given wet_grass=0.6True: ", res.potentials
+print "Marginals for sprinkler, given wet_grass=0.6True: ", res.potentials
 
 
 
@@ -98,3 +102,16 @@ tree.set_evidence({"winter":"True", "slippery_road":"False"})
 res = tree.marginals(["rain"])
 
 print "P(rain=True|winter=True, slippery_road=False): ", res.get_potential({"rain":["True"]}) 
+
+
+# Approximate inference:
+mc = MCMC(bn, numSamples=5000, burnIn=100)
+start = time.time()
+res = mc.marginals(["sprinkler"])
+print "Approximate marginals for sprinkler: ", res.potentials
+print "Took: ", time.time()-start
+
+start = time.time()
+res = mc.marginals(["sprinkler"], {"wet_grass":"True"})
+print "Approximate marginals for sprinkler, given wet_grass=True: ", res.potentials
+print "Took: ", time.time()-start

@@ -7,6 +7,8 @@ Created on Fri May 20 16:18:09 2016
 """
 
 import random
+import copy
+from primo.inference.factor import Factor
 
 class MCMC(object):
     
@@ -19,11 +21,14 @@ class MCMC(object):
             ----------
             bn : BayesianNetwork
                 The network that is used to approximate the marginals
+                
             transitionModel : TransitionModel, optional
                 The transition model that should be used to sample the next
                 state.
+                
             numSamples : int, optional
                 Number of samples used to approximate the probabilities.
+                
             burnIn : int, optional
                 The number of samples that should be discarded as burnIn.
         """
@@ -40,6 +45,7 @@ class MCMC(object):
             ---------
             variables : [String,]
                 List containing the names of the desired variables.
+                
             evidence : dict, optional
                 Dictionary containing the evidence variables as keys and their
                 instantiations as values.
@@ -54,6 +60,11 @@ class MCMC(object):
             evidence = {}
         initialState = self.bn.get_sample(evidence)
         sampleChain = self.sampler.generate_markov_chain(self.bn, self.numSamples, initialState, evidence)
+        # Compute probability for variables given the samples
+        variableValues = {v: self.bn.get_node(v).values for v in variables}
+        res = Factor.from_samples(sampleChain, variableValues)
+        
+        return res
         
         
     
@@ -75,7 +86,7 @@ class MarkovChainSampler(object):
                 Number of samples to discard before actually collecting and returning
                 samples. Default 1000
         """
-        self.burnIn = burnIN
+        self.burnIn = burnIn
         if not transitionModel:
             transitionModel = GibbsTransition()
         self.transitionModel = transitionModel
@@ -89,11 +100,14 @@ class MarkovChainSampler(object):
             ----------
             network : BayesianNetwork
                 The network from which the samples are drawn.
+                
             numSamples : int
                 The number of samples this generator returns in total
+                
             initialState : dict
                 A dictionary containing RandomNodes as keys and their instantiation
                 for the initial state of the network as values.
+                
             evidence : dict, optional
                 A dictionary containg the evidence variable as keys and their
                 instantiation as values.
@@ -105,6 +119,7 @@ class MarkovChainSampler(object):
                 instantiation as values.
         """
         curSamples = 0
+        state = copy.copy(initialState)
         while curSamples < self.burnIn:
             state = self.transitionModel.step(state, evidence, bn)
             curSamples += 1
@@ -116,7 +131,7 @@ class MarkovChainSampler(object):
 class TransitionModel(object):
     
     def step(self, currentState, evidence, bn):
-        raise NotImplementedError("Should be overwritten by inheriting class.)
+        raise NotImplementedError("Should be overwritten by inheriting class.")
     
 class GibbsTransition(TransitionModel):
     

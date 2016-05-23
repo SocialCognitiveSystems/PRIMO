@@ -213,7 +213,7 @@ class DiscreteNode(unittest.TestCase):
         
         with self.assertRaises(ValueError) as cm:
             n.get_probability("Value1", {"Node2": ["Value6"]})
-        self.assertEqual(str(cm.exception), "There is no conditional probability for parent {}, values {}.".format("Node2", "['Value6']"))
+        self.assertEqual(str(cm.exception), "There is no conditional probability for parent {}, values {} in node {}.".format("Node2", "['Value6']", "Node1"))
         
         
     def test_get_probability_multiple_parents(self):
@@ -225,6 +225,41 @@ class DiscreteNode(unittest.TestCase):
         cpt = np.array([[[0.95, 0.1],[0.8,0.0]],[[0.5,0.9],[0.2,1.0]]])
         wet.set_cpd(cpt)
         np.testing.assert_array_almost_equal(wet.get_probability("True", {"sprinkler":["True","False"], "rain":["True","False"]}),cpt[0,:,:])
+        
+    def test_get_probability_single_parent_value(self):
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        cpd = np.array([[0.2,0.3,0.4],[0.8,0.7,0.6]])
+        n.set_cpd(cpd)
+        # Get only the specified probability 
+        self.assertEqual(n.get_probability("Value1", {"Node2": "Value4"}),0.3)
+        
+    def test_get_probability_single_parent_value_error(self):
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        cpd = np.array([[0.2,0.3,0.4],[0.8,0.7,0.6]])
+        n.set_cpd(cpd)
+        with self.assertRaises(ValueError) as cm:
+            n.get_probability("Value1", {"Node2": "Value6"})
+        self.assertEqual(str(cm.exception), "There is no conditional probability for parent {}, value {} in node {}.".format("Node2", "Value6", "Node1"))
+        
+    def test_sample_value(self):
+        # Testing the actual sampling is difficult because of the random element
+        # involved. Therefore this test will only check if a value, that is contained
+        # in the node is returned. The likelyhood of that parameter is not guaranteed!!
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        
+        value = n.sample_value({}, [], forward=True)
+        self.assertTrue(value in n.values)
+        n.add_parent(n2)
+        value = n2.sample_value({}, [n], forward=True)
+        self.assertTrue(value in n2.values)
+        value = n2.sample_value({"Node1":"Value2"}, [n], forward=False)
+        self.assertTrue(value in n2.values)
+        
         
         
 #    def test_addParents(self):

@@ -17,7 +17,7 @@ class RandomNode(object):
     
     def __init__(self, nodename):
         self.name = nodename
-        self.cpd = None
+        self.cpd = 1
         
     def set_cpd(self, cpd):
         raise NotImplementedError("Called unimplemented Method")
@@ -202,8 +202,9 @@ class DiscreteNode(RandomNode):
             value: String
                 The value for which the probability should be returned.
             parentValues: Dict, optional
-                A dictionary with the parent names as keys and lists containing
-                the values of that parent that should be included.
+                A dictionary with the parent names as keys and either a list
+                containing the values or a single value of that parent that 
+                should be included.
                 Variables that are not a parent of this node will be ignored.
             
             Returns
@@ -221,17 +222,23 @@ class DiscreteNode(RandomNode):
         
         for parentName in self.parentOrder:
             if parentName in parentValues:
-                try:
-                    index.append([self.parents[parentName].values.index(v) for v in parentValues[parentName]])
-                except ValueError:
-                    raise ValueError("There is no conditional probability for parent {}, values {}.".format(parentName, parentValues[parentName]))
+                if hasattr(parentValues[parentName], "__iter__"):
+                    try:
+                        index.append([self.parents[parentName].values.index(v) for v in parentValues[parentName]])
+                    except ValueError:
+                        raise ValueError("There is no conditional probability for parent {}, values {} in node {}.".format(parentName, parentValues[parentName], self.name))
+                else:
+                    try:
+                        index.append([self.parents[parentName].values.index(parentValues[parentName])])
+                    except ValueError:
+                        raise ValueError("There is no conditional probability for parent {}, value {} in node {}.".format(parentName, parentValues[parentName], self.name))
             else:
                 index.append(range(len(self.parents[parentName].values)))
                 
         # use np.ix_ to construct the appropriate index array!
         return np.squeeze(np.copy(self.cpd[np.ix_(*index)]))
         
-    def sample_value(self, currentState, children):
+    def sample_value(self, currentState, children, forward=False):
         """
             Returns a value drawn from the probability density given by this node
             with respect to the current state of the other nodes in the network.
@@ -247,6 +254,11 @@ class DiscreteNode(RandomNode):
             children : [RandomNode,]
                 List of RandomNodes that have this node as parent.
                 
+            forward : Boolean, optional
+                If forward sampling is used, the current child instantiations are
+                ignored as it is assumed that we only start at the top variable
+                and propagate decisions down.
+                
             Returns
             -------
                 String
@@ -255,21 +267,21 @@ class DiscreteNode(RandomNode):
         #Compute probabilities of possible outcomes
         weights = np.zeros(len(self.values))
         for i, outcome in enumerate(self.values):
-#            prob = varToChange.get_probability(outcome, {parent: currentState[parent] for parent in varToChange.parents})
-#            for child in bn.get_children(varToChange):
             #Initialise with conditional probability of this outcome given
             #the parents' state
             prob = self.get_probability(outcome, currentState)
-            #Multiply with children's conditional probabilities:
-            for child in children:
-                childParentDict = dict(currentState)
-                childParentDict[self] = outcome
-                prob *= child.get_probability(currentState[child], childParentDict)
+            if not forward:
+                #Multiply with children's conditional probabilities:
+                for child in children:
+    #                print "child {} of node {}".format(child, self)
+                    childParentDict = dict(currentState)
+                    childParentDict[self] = outcome
+                    prob *= child.get_probability(currentState[child], childParentDict)
             weights[i] = prob
         
         #Perform roulette-wheel-sampling:
         random = np.random.uniform(high = np.sum(weights))
         for i in range(len(weights)):
-            if np.sum(weights[:i+1]) > random:
+            if np.sum(weights[:i+1]) >= random:
                 return self.values[i]
         

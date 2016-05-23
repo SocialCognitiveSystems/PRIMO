@@ -83,7 +83,19 @@ class BayesianNetwork(object):
                 [RandomNode,]
                 A list containing all the nodes that have the given node as parent.
         """
-        return self.graph.predecessors(nodeName)
+        return self.graph.successors(nodeName)
+        
+    def get_sample(self, evidence):
+        sample = {}
+        for e in evidence:
+            sample[e] = evidence[e]
+        # Make sure evidence contains RandomNodes and not only names
+        for n in nx.topological_sort(self.graph):
+            
+            if n not in evidence:
+                sample[n] = n.sample_value(sample, self.get_children(n), forward=True)
+            
+        return sample
 
 
     def clear(self):

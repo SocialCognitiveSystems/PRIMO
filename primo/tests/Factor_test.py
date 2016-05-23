@@ -47,6 +47,13 @@ class FactorTest(unittest.TestCase):
             self.assertTrue(p in f.variables)
             for v in self.n2.parents[p].values:
                 self.assertTrue(v in f.values[p])
+                
+    def test_create_from_samples(self):
+        samples = [{"A":"True", "B":"True"}, {"A":"True", "B":"False"},
+                   {"A":"False", "B":"False"}, {"A":"True", "B":"True"}]
+        variableValues = {"A":["True","False"], "B":["True","False"]}
+        res = Factor.from_samples(samples, variableValues)
+        np.testing.assert_array_almost_equal(res.potentials, np.array([[0.5, 0.25], [0,0.25]]))
         
     def test_as_evidence(self):
         f = Factor.as_evidence("E", ["True","False"], "True")

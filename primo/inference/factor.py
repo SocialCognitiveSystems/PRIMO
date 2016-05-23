@@ -28,6 +28,49 @@ class Factor(object):
         
         
     @classmethod
+    def from_samples(cls, samples, variableValues):
+        """
+            Creates a sample over the given variables and 
+            computes their potentials from the given samples. The resulting 
+            factor will represent the joint probability of the given variables,
+            potentially given some evidence that was used when generating the
+            samples.
+            
+            Parameters
+            ----------
+            samples : [dict,]
+                List of states where each state is represented with a dictionary
+                containing the variables as keys and their instantiation as value.
+            
+            variableValues: dict
+                A dictionary containing the variables as keys and their value
+                lists as values over which this factor is defined.
+                
+            Returns
+            -------
+                Factor
+                A factor representing the joint probability of the given
+                variables according to the given samples.
+        """
+        
+        res = cls()
+        shape = []
+        for i, v in enumerate(variableValues):
+            res.variableOrder.append(v)
+            res.variables[v] = i
+            res.values[v] = variableValues[v]
+            shape.append(len(variableValues[v]))
+        res.potentials = np.zeros(shape)
+        for s in samples:
+            idx = []
+            for v in res.variableOrder:
+                idx.append(res.values[v].index(s[v]))
+            res.potentials[tuple(idx)] += 1
+        res.potentials /= np.sum(res.potentials)
+        return res
+        
+        
+    @classmethod
     def get_trivial(cls, potential=1.0):
         """
             Helper function to create a trivial factor with a given potential.
