@@ -238,6 +238,14 @@ class DiscreteNode(RandomNode):
         # use np.ix_ to construct the appropriate index array!
         return np.squeeze(np.copy(self.cpd[np.ix_(*index)]))
         
+    def get_markov_prob(self, outcome, children, state, forward=False):
+        
+        prob = self.get_probability(outcome, state)
+        if not forward:
+            for child in children:
+                prob *= child.get_probability(state[child], state)
+        return prob
+        
     def sample_value(self, currentState, children, forward=False):
         """
             Returns a value drawn from the probability density given by this node
@@ -269,15 +277,18 @@ class DiscreteNode(RandomNode):
         for i, outcome in enumerate(self.values):
             #Initialise with conditional probability of this outcome given
             #the parents' state
-            prob = self.get_probability(outcome, currentState)
-            if not forward:
-                #Multiply with children's conditional probabilities:
-                for child in children:
-    #                print "child {} of node {}".format(child, self)
-                    childParentDict = dict(currentState)
-                    childParentDict[self] = outcome
-                    prob *= child.get_probability(currentState[child], childParentDict)
-            weights[i] = prob
+#            prob = self.get_probability(outcome, currentState)
+#            if not forward:
+#                #Multiply with children's conditional probabilities:
+#                for child in children:
+#    #                print "child {} of node {}".format(child, self)
+#                    childParentDict = dict(currentState)
+#                    childParentDict[self] = outcome
+#                    prob *= child.get_probability(currentState[child], childParentDict)
+#            weights[i] = prob
+            adaptedState = dict(currentState)
+            adaptedState[self] = outcome
+            weights[i] = self.get_markov_prob(outcome, children, adaptedState, forward)
         
         #Perform roulette-wheel-sampling:
         random = np.random.uniform(high = np.sum(weights))
@@ -285,3 +296,5 @@ class DiscreteNode(RandomNode):
             if np.sum(weights[:i+1]) >= random:
                 return self.values[i]
         
+    def sample_local(self, currentValue):
+        return np.random.choice(self.values)

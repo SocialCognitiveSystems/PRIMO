@@ -105,7 +105,7 @@ print "P(rain=True|winter=True, slippery_road=False): ", res.get_potential({"rai
 
 
 # Approximate inference:
-mc = MCMC(bn, numSamples=5000, burnIn=100)
+mc = MCMC(bn, numSamples=1000, burnIn=100)
 start = time.time()
 res = mc.marginals(["sprinkler"])
 print "Approximate marginals for sprinkler: ", res.potentials
