@@ -245,6 +245,9 @@ class DiscreteNode(unittest.TestCase):
             n.get_probability("Value1", {"Node2": "Value6"})
         self.assertEqual(str(cm.exception), "There is no conditional probability for parent {}, value {} in node {}.".format("Node2", "Value6", "Node1"))
         
+        #TODO consider enforcing the same ordering of the value probabilities as speciefied
+        # in the lists inside the dictionary
+        
     def test_sample_value(self):
         # Testing the actual sampling is difficult because of the random element
         # involved. Therefore this test will only check if a value, that is contained
@@ -260,14 +263,24 @@ class DiscreteNode(unittest.TestCase):
         value = n2.sample_value({"Node1":"Value2"}, [n], forward=False)
         self.assertTrue(value in n2.values)
         
+    def test_sample_local(self):
+        # Same problem as with sampling values. Will only check if
+        # a reasonable value was drawn. Since currently uniform distribution
+        # for this propositional distribution is assumed, one could generate a lot
+        # of samples and check if that as approximately uniform.
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        
+        value = n.sample_local("Value1")
+        self.assertTrue(value in n.values)
+        n.add_parent(n2)
+        value = n2.sample_local("Value3")
+        self.assertTrue(value in n2.values)
+        value = n2.sample_local("Value5")
+        self.assertTrue(value in n2.values)
         
         
-#    def test_addParents(self):
-#        pass
-        
-        
-    #TODO consider enforcing the same ordering of the value probabilities as speciefied
-    # in the lists inside the dictionary
+
         
         
 """ TODO for Continous Nodes!!!"""        

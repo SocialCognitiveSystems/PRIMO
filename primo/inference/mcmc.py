@@ -207,7 +207,8 @@ class MetropolisHastingsTransition(TransitionModel):
                 proposedProb = v.get_markov_prob(proposedValue, bn.get_children(v), adoptedState)
                 currentProb = v.get_markov_prob(currentState[v], bn.get_children(v), currentState)
                 
-                accept = np.min([1, proposedProb/currentProb])
+                with np.errstate(divide='ignore'):
+                    accept = np.min([1, proposedProb/currentProb])
                 if np.random.uniform() <= accept:
                     currentState[v] = proposedValue
         else:
@@ -218,7 +219,8 @@ class MetropolisHastingsTransition(TransitionModel):
             proposedProb = varToChange.get_markov_prob(proposedValue, bn.get_children(varToChange), adoptedState)
             currentProb = varToChange.get_markov_prob(currentState[varToChange], bn.get_children(varToChange), currentState)
             
-            accept = np.min([1, proposedProb/currentProb])
+            with np.errstate(divide='ignore'):
+                accept = np.min([1, proposedProb/currentProb])
             if np.random.uniform() <= accept:
                 currentState[varToChange] = proposedValue
             
