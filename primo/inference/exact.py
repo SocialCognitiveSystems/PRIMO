@@ -110,8 +110,6 @@ class VariableElimination(object):
             order.remove(v)
             order.append(v)
             
-#        print "order: ", order
-            
         factors = [Factor.from_node(bn.get_node(v)) for v in order]
         
         #Create buckets with trivial factors (one more than variables
@@ -129,23 +127,14 @@ class VariableElimination(object):
         for e in evidence.iterkeys():
             bucketI = order.index(e)
             buckets[bucketI] = buckets[bucketI] * Factor.as_evidence(e, bn.get_node(e).values, evidence[e])
-#            print "evidence for: ", e
-#            print "resulting bucket table: ", buckets[bucketI].potentials
-#            print "variable order: ", buckets[bucketI].variableOrder
             
         bucketUntil = len(order)- len(variables)
         # Process buckets
         for i in range(bucketUntil):
-#            print "margenilize: ", order[i]
             tmpFactor = buckets[i].marginalize(order[i])
-#            print "tmpFactor.variables: ", tmpFactor.variables
-#            print "tmpFactor.table: ", tmpFactor.potentials
             for j in range(i+1, len(order)):
                 if order[j] in tmpFactor.variables:
-#                    print "inserting in bucket: ", order[j]
-#                    print "bucket before: ", buckets[j].potentials
                     buckets[j] = buckets[j] * tmpFactor
-#                    print "resulting bucket: ", buckets[j].potentials
                     break
             else:
                 # No suitable bucket found -> factor is trivial
@@ -335,7 +324,8 @@ class FactorTree(object):
             raise ValueError("No clique containing the variables {} was found.".format(variables))
             
         
-        
+     def get_evidence_probability(self):
+         raise NotImplementedError("We still need to implement this...")
         
     def calculate_messages(self):
         """
