@@ -324,7 +324,7 @@ class FactorTree(object):
             raise ValueError("No clique containing the variables {} was found.".format(variables))
             
         
-     def get_evidence_probability(self):
+    def get_evidence_probability(self):
          raise NotImplementedError("We still need to implement this...")
         
     def calculate_messages(self):

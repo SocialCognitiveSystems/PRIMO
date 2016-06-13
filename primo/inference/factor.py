@@ -200,6 +200,7 @@ class Factor(object):
         with np.errstate(divide='ignore'):
             f1.potentials = f1.potentials / f2.potentials
             f1.potentials[f1.potentials==np.inf] = 0
+            f1.potentials[np.isnan(f1.potentials)] = 0 # Required for 0/0
         return f1           
         
         

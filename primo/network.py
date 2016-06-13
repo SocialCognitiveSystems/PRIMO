@@ -111,3 +111,12 @@ class BayesianNetwork(object):
     def __len__(self):
         '''Return the number of nodes in the graph.'''
         return len(self.graph)
+        
+    def toJSON(self):
+        res = {}
+        allNodes = self.get_all_nodes()
+        edges = self.graph.edges()
+        res["nodes"] = [{"name":n.name, "table":n.cpd.tolist()} for n in allNodes]
+        res["links"] = [{"source": allNodes.index(e[0]), "target": allNodes.index(e[1])} for e in edges]
+        #TODO links
+        return res            
