@@ -12,6 +12,7 @@ import numpy as np
 
 from primo.network import BayesianNetwork
 from primo.io import XMLBIFParser
+from primo.nodes import DiscreteNode
 
 class XMLBIFTest(unittest.TestCase):
     
@@ -52,8 +53,41 @@ class XMLBIFTest(unittest.TestCase):
         cpt = np.array([[[0.8,0.5,0.7],[0.6,0.2,0.1]],[[0.2,0.5,0.3],[0.4,0.8,0.9]]])
         np.testing.assert_array_almost_equal(johnNode.cpd, cpt)
         
-#    def test_writeXMLBIF(self):
-#        self.fail("TODO")
+    def test_writeXMLBIF(self):
+        path= "primo/tests/test.xbif"
+        bn = BayesianNetwork()
+        n1 = DiscreteNode("a")
+        n2 = DiscreteNode("b", ["happy", "sad"])
+        bn.add_node(n1)
+        bn.add_node(n2)
+        bn.add_edge(n1,n2)
+        XMLBIFParser.write(bn, path)
+
+        bn2 = XMLBIFParser.parse(path)
+        for n in bn2.get_all_nodes():
+            tmpn = bn.get_node(n)
+            for value in tmpn.values:
+                self.assertTrue(value in n.values)
+            for p in tmpn.parents.keys():
+                self.assertTrue(p in n.parents)
+            np.testing.assert_almost_equal(tmpn.cpd, n.cpd)
+        # remove testfile
+        os.remove(path)       
+            
+    def test_writeXMLBIF(self):
+        testPath = "primo/tests/testSlippery.xbif"
+        bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        XMLBIFParser.write(bn, testPath)
+        bn2 = XMLBIFParser.parse(testPath)
+        for n in bn2.get_all_nodes():
+            tmpn = bn.get_node(n)
+            for value in tmpn.values:
+                self.assertTrue(value in n.values)
+            for i,p in enumerate(tmpn.parentOrder):
+                self.assertEqual(p, n.parentOrder[i])
+            np.testing.assert_almost_equal(tmpn.cpd, n.cpd)
+        # remove testfile
+        os.remove(testPath)
         
 if __name__ == "__main__":
     #Workaround so that this script also finds the resource files when run directly

@@ -49,4 +49,37 @@ class XMLBIFParser(object):
             
         return bn
         
+    @staticmethod
+    def write(bn, filename):
+        root = et.Element("BIF")
+        root.attrib["VERSION"] = "0.3"
+        network = et.SubElement(root, "NETWORK")
+        netName = et.SubElement(network, "NAME")
+        netName.text = bn.name
+        for node in bn.get_all_nodes():
+            var = et.SubElement(network, "VARIABLE")
+            var.attrib["TYPE"] = "nature"
+      
+            varName = et.SubElement(var, "NAME")
+            varName.text = node.name
+            for out in node.values:
+                tmp = et.SubElement(var, "OUTCOME")
+                tmp.text = out
+#            for prop in node.properties:
+#                tmp = et.SubElement(var, "PROPERTY")
+#                tmp.text = prop
+      
+            defi = et.SubElement(network, "DEFINITION")
+            tmp = et.SubElement(defi, "FOR")
+            tmp.text = node.name
+            for parent in reversed(node.parentOrder):
+                tmp = et.SubElement(defi, "GIVEN")
+                tmp.text = parent
+            table = et.SubElement(defi, "TABLE")
+            table.text = " ".join(str(e) for e in np.reshape(node.cpd, (np.size(node.cpd)), "F"))
+
+        f = open(filename, "w")
+        f.write(et.tostring(root, pretty_print=True))
+        f.close()
+        
         
