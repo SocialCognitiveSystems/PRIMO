@@ -47,6 +47,16 @@ class VariableEliminationTest(unittest.TestCase):
     def setUp(self):
         self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
         
+    def test_empty_cpt(self):
+        bn = BayesianNetwork()
+        from primo.nodes import DiscreteNode
+        n1 = DiscreteNode("a")
+        n2 = DiscreteNode("b")
+        bn.add_node(n1)
+        bn.add_node(n2)
+        bn.add_edge(n1,n2)
+        res = VariableElimination.naive_marginals(bn, ["a"])
+        np.testing.assert_array_almost_equal(res.get_potential(), np.array([0.0, 0.0]))
         
     def test_naive_marginals(self):
         resFactor = VariableElimination.naive_marginals(self.bn, ["winter"])
@@ -101,6 +111,19 @@ class FactorEliminationTest(unittest.TestCase):
     
     def setUp(self):
         self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        
+        
+    def test_empty_cpt(self):
+        bn = BayesianNetwork()
+        from primo.nodes import DiscreteNode
+        n1 = DiscreteNode("a")
+        n2 = DiscreteNode("b")
+        bn.add_node(n1)
+        bn.add_node(n2)
+        bn.add_edge(n1,n2)
+        ft = FactorTree.create_jointree(bn)
+        res = ft.marginals(["a"])
+        np.testing.assert_array_almost_equal(res.get_potential(), np.array([0.0, 0.0]))
         
     def test_create_jointree(self):
         ft = FactorTree.create_jointree(self.bn)

@@ -182,6 +182,7 @@ class Factor(object):
             with np.errstate(divide='ignore'):
                 f1.potentials = f1.potentials / f2.potentials
                 f1.potentials[f1.potentials==np.inf] = 0
+                f1.potentials[np.isnan(f1.potentials)] = 0 # Required for 0/0
             return f1
         
         if set(f1.variableOrder) != set(f2.variableOrder):
@@ -370,5 +371,6 @@ class Factor(object):
             Normalizes the included potential so that they add up to 1. Should
             mainly be used internally when computing posterior marginals!
         """
-        
-        self.potentials /= np.sum(self.potentials)
+        potentialSum = np.sum(self.potentials)
+        if potentialSum > 0:
+            self.potentials /= potentialSum

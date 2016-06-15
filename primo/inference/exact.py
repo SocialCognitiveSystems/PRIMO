@@ -181,6 +181,7 @@ class FactorTree(object):
         
         if not order:
             order = Orderer.get_min_degree_order(bn)
+            
         moralG = bn.graph.to_undirected()
         factors = []
         #Add edges between parents
@@ -212,7 +213,6 @@ class FactorTree(object):
             clusterSeq.remove(clusterSeq[i])
             clusterSeq.insert(i, tmp)
             clusterSeq.remove(tmp)
-            
         
         # Construct jointree
         tree = nx.Graph(messagesValid=False)
@@ -315,6 +315,7 @@ class FactorTree(object):
         # Determine clique containing variables:
         varSet = set(variables)
         for treeNode, treeData in self.tree.nodes_iter(data=True):
+            print "treeData: ", treeData["variables"]
             if varSet.issubset(treeData["variables"]):
                 resFactor = treeData["factor"].marginalize(treeData["variables"] - varSet)
                 resFactor.normalize()
