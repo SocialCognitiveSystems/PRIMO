@@ -198,7 +198,7 @@ class Factor(object):
                 for idx, v in enumerate(f2.variableOrder):
                     f2.variables[v] = idx
                     
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide='ignore', invalid="ignore"):
             f1.potentials = f1.potentials / f2.potentials
             f1.potentials[f1.potentials==np.inf] = 0
             f1.potentials[np.isnan(f1.potentials)] = 0 # Required for 0/0

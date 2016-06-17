@@ -53,7 +53,7 @@ class XMLBIFTest(unittest.TestCase):
         cpt = np.array([[[0.8,0.5,0.7],[0.6,0.2,0.1]],[[0.2,0.5,0.3],[0.4,0.8,0.9]]])
         np.testing.assert_array_almost_equal(johnNode.cpd, cpt)
         
-    def test_writeXMLBIF(self):
+    def test_writeXMLBIF_simple(self):
         path= "primo/tests/test.xbif"
         bn = BayesianNetwork()
         n1 = DiscreteNode("a")
@@ -72,6 +72,7 @@ class XMLBIFTest(unittest.TestCase):
                 self.assertTrue(p in n.parents)
             np.testing.assert_almost_equal(tmpn.cpd, n.cpd)
         # remove testfile
+        import os
         os.remove(path)       
             
     def test_writeXMLBIF(self):
@@ -87,6 +88,7 @@ class XMLBIFTest(unittest.TestCase):
                 self.assertEqual(p, n.parentOrder[i])
             np.testing.assert_almost_equal(tmpn.cpd, n.cpd)
         # remove testfile
+        import os
         os.remove(testPath)
         
 if __name__ == "__main__":

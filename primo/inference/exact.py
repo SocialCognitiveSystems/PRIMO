@@ -213,17 +213,17 @@ class FactorTree(object):
             clusterSeq.remove(clusterSeq[i])
             clusterSeq.insert(i, tmp)
             clusterSeq.remove(tmp)
-        
         # Construct jointree
         tree = nx.Graph(messagesValid=False)
-        tree.add_node("".join(clusterSeq[-1]), variables=set(clusterSeq[-1]), factor=Factor.get_trivial())
-        for i in range(len(clusterSeq)-2,-1,-1):
-            tree.add_node("".join(clusterSeq[i]), variables=set(clusterSeq[i]), factor=Factor.get_trivial())
-            jointreeProp = set(clusterSeq[i]).intersection(set().union(*clusterSeq[i+1:]))
-            for cl in clusterSeq[i+1:]:
-                if jointreeProp.issubset(set(cl)):
-                    tree.add_edge("".join(clusterSeq[i]), "".join(cl), sep=jointreeProp, factor=Factor.get_trivial())
-                    break
+        if len(clusterSeq) > 0:
+            tree.add_node("".join(clusterSeq[-1]), variables=set(clusterSeq[-1]), factor=Factor.get_trivial())
+            for i in range(len(clusterSeq)-2,-1,-1):
+                tree.add_node("".join(clusterSeq[i]), variables=set(clusterSeq[i]), factor=Factor.get_trivial())
+                jointreeProp = set(clusterSeq[i]).intersection(set().union(*clusterSeq[i+1:]))
+                for cl in clusterSeq[i+1:]:
+                    if jointreeProp.issubset(set(cl)):
+                        tree.add_edge("".join(clusterSeq[i]), "".join(cl), sep=jointreeProp, factor=Factor.get_trivial())
+                        break
                     
         # Assign factors to clusters
         for f in factors:
@@ -315,7 +315,6 @@ class FactorTree(object):
         # Determine clique containing variables:
         varSet = set(variables)
         for treeNode, treeData in self.tree.nodes_iter(data=True):
-            print "treeData: ", treeData["variables"]
             if varSet.issubset(treeData["variables"]):
                 resFactor = treeData["factor"].marginalize(treeData["variables"] - varSet)
                 resFactor.normalize()
@@ -334,10 +333,13 @@ class FactorTree(object):
             the first node as root. Is needed to validate the messages in the
             jointree.
         """
-        root = self.tree.nodes()[0]
-        self.pull_messages(self.tree, root, None)
-        self.push_messages(self.tree, root, None)
-        self.tree.graph["messagesValid"] = True
+        try:
+            root = self.tree.nodes()[0]
+            self.pull_messages(self.tree, root, None)
+            self.push_messages(self.tree, root, None)
+            self.tree.graph["messagesValid"] = True
+        except IndexError:
+            pass
         
     def pull_messages(self, tree, curNode, parent):
         """

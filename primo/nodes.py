@@ -7,6 +7,7 @@ Created on Thu May 12 13:53:34 2016
 """
 
 import numpy as np
+import random
 
 class RandomNode(object):
     """
@@ -91,7 +92,7 @@ class DiscreteNode(RandomNode):
                 The new parent/cause node
         """
         
-        self.parents[parentNode] = parentNode
+        self.parents[parentNode.name] = parentNode
         self.parentOrder.append(parentNode.name)
         self._update_dimensions()
         
@@ -213,6 +214,7 @@ class DiscreteNode(RandomNode):
             np.array
                 A copy of the specified portion of the cpt (might be only one value).
         """
+
         try:
             index = [[self.values.index(value)]]
         except ValueError:
@@ -237,14 +239,85 @@ class DiscreteNode(RandomNode):
                 index.append(range(len(self.parents[parentName].values)))
                 
         # use np.ix_ to construct the appropriate index array!
-        return np.squeeze(np.copy(self.cpd[np.ix_(*index)]))
+        index = np.ix_(*index)
+        tmp = self.cpd[index]
+        res = np.squeeze(tmp)
+        return res #np.squeeze(np.copy(self.cpd[np.ix_(*index]))
+        
+    def _get_single_probability(self, value, parentValues=None):
+        """
+            Fast-path function to return the probability for a given value of this
+            random node. This assumes that parentValues completely specifies 
+            a single element of the cpd.
+            This fast-path should mainly be used by get_markov_prob as the
+            conditions for this functions are satisfied there and this saves
+            quite a bit of performance when sampling!
+            
+            Paramters
+            ---------
+            value: String
+                The value for which the probability should be returned.
+                
+            parentValues: Dict, optional
+                A dictionary containing name:value pairs for all parents of this
+                node. Can only be omitted if this node does not have parents.
+                Variables that are not a parent of this node will be ignored.
+            
+            Returns
+            -------
+            float
+                The probability of this value given the parent values.
+        """
+        try:
+            index = [self.values.index(value)]
+        except ValueError:
+            raise ValueError("This node as no value {}.".format(value))
+            
+        if not parentValues:
+            parentValues = {}
+            
+        for parentName in self.parentOrder:
+            try:
+                index.append(self.parents[parentName].values.index(parentValues[parentName]))
+            except KeyError:
+                raise KeyError("parentValues need to specify a value for parent {} of node: {}.".format(parentName, self.name))
+            except ValueError:
+                raise ValueError("There is no conditional probability for parent {}, value {} in node {}.".format(parentName, parentValues[parentName], self.name))
+        return self.cpd[tuple(index)]
         
     def get_markov_prob(self, outcome, children, state, forward=False):
+        """
+            Computes the markov probability of the given outcome of this random variable,
+            given it's markov blanket.
+            
+            Parameters
+            ----------
+            outcome: String
+                The value for which the probability is to be computed.
+                
+            children: [RandomNode,]
+                A list containing all children of this node.
+                
+            state: dict
+                Dictionary containing the state of at least all other random nodes
+                in this nodes' markov blanket as name:value pairs.
+                
+            forward: boolean, optional
+                If forward, only the probability of this value given it's parents
+                is considered, not the entire markov blanket. Useful, when generating
+                an initial sample where the instantiations of the children is not
+                yet known. Will ignore the given children.
+                
+            Returns
+            -------
+                float
+                The probability of the given outcome given this node's markov blanket.
+        """
         
-        prob = self.get_probability(outcome, state)
+        prob = self._get_single_probability(outcome, state)
         if not forward:
             for child in children:
-                prob *= child.get_probability(state[child], state)
+                prob *= child._get_single_probability(state[child.name], state)
         return prob
         
     def sample_value(self, currentState, children, forward=False):
@@ -274,28 +347,33 @@ class DiscreteNode(RandomNode):
                 Name of the value this DiscreteNode has most likely adopted.
         """
         #Compute probabilities of possible outcomes
-        weights = np.zeros(len(self.values))
-        for i, outcome in enumerate(self.values):
-            #Initialise with conditional probability of this outcome given
-            #the parents' state
-#            prob = self.get_probability(outcome, currentState)
-#            if not forward:
-#                #Multiply with children's conditional probabilities:
-#                for child in children:
-#    #                print "child {} of node {}".format(child, self)
-#                    childParentDict = dict(currentState)
-#                    childParentDict[self] = outcome
-#                    prob *= child.get_probability(currentState[child], childParentDict)
-#            weights[i] = prob
+        weights = []
+        for outcome in self.values:
             adaptedState = dict(currentState)
             adaptedState[self] = outcome
-            weights[i] = self.get_markov_prob(outcome, children, adaptedState, forward)
+            weights.append(self.get_markov_prob(outcome, children, adaptedState, forward))
         
         #Perform roulette-wheel-sampling:
-        random = np.random.uniform(high = np.sum(weights))
+        rndVal = random.random()* sum(weights)
+        s = 0
         for i in range(len(weights)):
-            if np.sum(weights[:i+1]) >= random:
+            s += weights[i]
+            if s >= rndVal:
                 return self.values[i]
         
     def sample_local(self, currentValue):
-        return np.random.choice(self.values)
+        """
+            Returns a randomly chosen possible outcome of this node. 
+            
+            Parameters
+            ---------
+            currentValue: String
+                The value this node had before. This is not used for DiscreteNodes
+                but might be useful in the coninuous case.
+            
+            Returns
+            -------
+                String
+                The chosen value.
+        """
+        return random.choice(self.values)

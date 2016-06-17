@@ -157,6 +157,67 @@ class DiscreteNode(unittest.TestCase):
         with self.assertRaises(ValueError) as cm:
             n.set_probability("NotThere", 0.2)
         self.assertEqual(str(cm.exception), "This node as no value NotThere.")
+
+    def test_get_single_probabilits(self):
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])   
+        cpd = np.array([0.2,0.8])
+        n.set_cpd(cpd)
+        self.assertEqual(n._get_single_probability("Value1"), 0.2)
+        
+    def test_get_single_probability_with_parent(self):
+        """
+            Probabilities can be looked up either individually by specifying the 
+            parents and their values explicitly, or as a subslice showing the
+            remaining cpt for the desired value.
+        """
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        cpd = np.array([[0.2,0.3,0.4],[0.8,0.7,0.6]])
+        n.set_cpd(cpd)
+        # Get reduced cpt for that value
+        np.testing.assert_array_equal(n.get_probability("Value1"), np.array([0.2,0.3,0.4]))
+        # Get only the specified probability 
+        self.assertEqual(n._get_single_probability("Value1", {"Node2": "Value4"}),0.3)
+        
+        
+        n1 = nodes.DiscreteNode("sprinkler")
+        n2 = nodes.DiscreteNode("rain")
+        n3 = nodes.DiscreteNode("wet_grass")
+        n3.add_parent(n1)
+        n3.add_parent(n2)
+        cpt = np.array([[[0.95, 0.1],[0.8,0.0]], [[0.05, 0.9],[0.2, 1.0]]])
+        n3.set_cpd(cpt)
+        self.assertEqual(n3._get_single_probability("False", {"rain":"True", "sprinkler":"False"}),0.2)
+        self.assertEqual(n3._get_single_probability("True", {"rain":"False", "sprinkler":"True"}),0.1)
+
+        # Check other parent order!        
+        n1 = nodes.DiscreteNode("sprinkler")
+        n2 = nodes.DiscreteNode("rain")
+        n3 = nodes.DiscreteNode("wet_grass")
+        n3.add_parent(n2)
+        n3.add_parent(n1)
+        cpt = np.array([[[0.95, 0.8],[0.1, 0.0]],[[0.05, 0.2], [0.9, 1.0]]])
+        n3.set_cpd(cpt)
+        self.assertEqual(n3._get_single_probability("False", {"rain":"True", "sprinkler":"False"}),0.2)
+        self.assertEqual(n3._get_single_probability("True", {"rain":"False", "sprinkler":"True"}),0.1)
+     
+     
+    def test_get_single_probability_error(self):
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        with self.assertRaises(ValueError) as cm:
+            n._get_single_probability("Value3")
+        self.assertEqual(str(cm.exception), "This node as no value {}.".format("Value3"))
+        
+        with self.assertRaises(ValueError) as cm:
+            n._get_single_probability("Value1", {"Node2": "Value6"})
+        self.assertEqual(str(cm.exception), "There is no conditional probability for parent {}, value {} in node {}.".format("Node2", "Value6", "Node1"))
+        
+        with self.assertRaises(KeyError) as cm:
+            n._get_single_probability("Value1")
+        self.assertEqual(cm.exception.message, "parentValues need to specify a value for parent {} of node: {}.".format("Node2", "Node1"))
         
     def test_get_probability(self):
         n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
@@ -280,8 +341,33 @@ class DiscreteNode(unittest.TestCase):
         self.assertTrue(value in n2.values)
         
         
-
+    def test_get_markov_prob_forward_child(self):
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        cpd = np.array([[0.2,0.3,0.4],[0.8,0.7,0.6]])
+        n.set_cpd(cpd)
+        self.assertEqual(n.get_markov_prob("Value1", [], {"Node2": "Value4"}, forward=True), 0.3)
         
+    def test_get_markov_prob_forward_parent(self):
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        cpd = np.array([[0.2,0.3,0.4],[0.8,0.7,0.6]])
+        n.set_cpd(cpd)
+        cpd2 = np.array([0.3, 0.5, 0.2])
+        n2.set_cpd(cpd2)
+        self.assertEqual(n2.get_markov_prob("Value5", [n], {"Node1": "Value2"}, forward=True), 0.2)
+        
+    def test_get_markov_prob(self):
+        n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        cpd = np.array([[0.2,0.3,0.4],[0.8,0.7,0.6]])
+        n.set_cpd(cpd)
+        cpd2 = np.array([0.3, 0.5, 0.2])
+        n2.set_cpd(cpd2)
+        self.assertEqual(n2.get_markov_prob("Value5", [n], {"Node1": "Value2", "Node2": "Value5"}, forward=False), 0.12)
         
 """ TODO for Continous Nodes!!!"""        
 

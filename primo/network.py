@@ -26,7 +26,7 @@ import primo.nodes
 class BayesianNetwork(object):
 
     def __init__(self):
-        super(BayesianNetwork, self).__init__()
+#        super(BayesianNetwork, self).__init__()
         self.graph = nx.DiGraph()
         self.node_lookup = {}
         self.name = "" #Only used to be compatible with XMLBIF
@@ -39,6 +39,20 @@ class BayesianNetwork(object):
             self.graph.add_node(node)
         else:
             raise TypeError("Only subclasses of RandomNode are valid nodes.")
+            
+    def remove_node(self, node):
+        if node in self.graph:
+            #Go over all children of this node
+            for child in self.graph.succ[node]:
+                child.remove_parent(self.node_lookup[node])
+            self.graph.remove_node(node)
+            del self.node_lookup[node]
+    
+    def remove_edge(self, fromName, toName):
+        if fromName in self.graph and toName in self.graph:
+            self.node_lookup[toName].remove_parent(self.node_lookup[fromName])
+            self.graph.remove_edge(fromName, toName)
+        
 
     def add_edge(self, fromName, toName):
         if fromName in self.graph and toName in self.graph:
@@ -83,7 +97,7 @@ class BayesianNetwork(object):
                 [RandomNode,]
                 A list containing all the nodes that have the given node as parent.
         """
-        return self.graph.successors(nodeName)
+        return self.graph.succ[nodeName]
         
     def get_sample(self, evidence):
         sample = {}
@@ -93,7 +107,7 @@ class BayesianNetwork(object):
         for n in nx.topological_sort(self.graph):
             
             if n not in evidence:
-                sample[n] = n.sample_value(sample, self.get_children(n), forward=True)
+                sample[n.name] = n.sample_value(sample, self.get_children(n), forward=True)
             
         return sample
 

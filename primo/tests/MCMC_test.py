@@ -32,7 +32,9 @@ class GibbsTransitionTest(unittest.TestCase):
             can take.
         """
         gibbs = GibbsTransition()
-        newState = gibbs.step(self.initialState, {}, self.bn, fullChange=False)
+        evidence = {}
+        varsToChange = [node for node in self.bn.get_all_nodes() if not node in evidence]
+        newState = gibbs.step(self.initialState, varsToChange, self.bn, fullChange=False)
         for var, val in newState.items():
             self.assertTrue(val in var.values)
             
@@ -42,8 +44,9 @@ class GibbsTransitionTest(unittest.TestCase):
         """
         gibbs = GibbsTransition()
         evidence = {"wet_grass":"true"}
+        varsToChange = [node for node in self.bn.get_all_nodes() if not node in evidence]
         self.initialState["wet_grass"] = "true"
-        newState = gibbs.step(self.initialState, evidence, self.bn, fullChange=False)
+        newState = gibbs.step(self.initialState, varsToChange, self.bn, fullChange=False)
         for var, val in newState.items():
             self.assertTrue(val in var.values)
             if var in evidence:
@@ -56,8 +59,9 @@ class GibbsTransitionTest(unittest.TestCase):
         """
         gibbs = GibbsTransition()
         evidence = {"sprinkler":"true"}
+        varsToChange = [node for node in self.bn.get_all_nodes() if not node in evidence]
         self.initialState["sprinkler"] = "true"
-        newState = gibbs.step(self.initialState, evidence, self.bn, fullChange=True)
+        newState = gibbs.step(self.initialState, varsToChange, self.bn, fullChange=True)
         for var, val in newState.items():
             self.assertTrue(val in var.values)
             if var in evidence:
@@ -76,7 +80,9 @@ class MetropolisHastingTransitionTest(unittest.TestCase):
             can take.
         """
         met = MetropolisHastingsTransition()
-        newState = met.step(self.initialState, {}, self.bn, fullChange=False)
+        evidence = {}
+        varsToChange = [node for node in self.bn.get_all_nodes() if not node in evidence]
+        newState = met.step(self.initialState, varsToChange, self.bn, fullChange=False)
         for var, val in newState.items():
             self.assertTrue(val in var.values)
             
@@ -86,8 +92,9 @@ class MetropolisHastingTransitionTest(unittest.TestCase):
         """
         met = MetropolisHastingsTransition()
         evidence = {"wet_grass":"true"}
+        varsToChange = [node for node in self.bn.get_all_nodes() if not node in evidence]
         self.initialState["wet_grass"] = "true"
-        newState = met.step(self.initialState, evidence, self.bn, fullChange=False)
+        newState = met.step(self.initialState, varsToChange, self.bn, fullChange=False)
         for var, val in newState.items():
             self.assertTrue(val in var.values)
             if var in evidence:
@@ -100,8 +107,9 @@ class MetropolisHastingTransitionTest(unittest.TestCase):
         """
         met = MetropolisHastingsTransition()
         evidence = {"sprinkler":"true"}
+        varsToChange = [node for node in self.bn.get_all_nodes() if not node in evidence]
         self.initialState["sprinkler"] = "true"
-        newState = met.step(self.initialState, evidence, self.bn, fullChange=True)
+        newState = met.step(self.initialState, varsToChange, self.bn, fullChange=True)
         for var, val in newState.items():
             self.assertTrue(val in var.values)
             if var in evidence:

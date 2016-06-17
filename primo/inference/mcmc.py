@@ -7,13 +7,11 @@ Created on Fri May 20 16:18:09 2016
 """
 
 import random
-import copy
-import numpy as np
 from primo.inference.factor import Factor
 
 class MCMC(object):
     
-    def __init__(self, bn, transitionModel=None, numSamples=1000, burnIn=100):
+    def __init__(self, bn, transitionModel=None, numSamples=1000, burnIn=1000, fullChange=False):
         """
             Creates a markov cain monte carlo instance which is used to 
             approximate marginals on a given BayesianNetwork.
@@ -25,17 +23,21 @@ class MCMC(object):
                 
             transitionModel : TransitionModel, optional
                 The transition model that should be used to sample the next
-                state.
+                state. (Default: None -> Uses Metropolis Hastings)
                 
             numSamples : int, optional
-                Number of samples used to approximate the probabilities.
+                Number of samples used to approximate the probabilities. (Default: 1000)
                 
             burnIn : int, optional
-                The number of samples that should be discarded as burnIn.
+                The number of samples that should be discarded as burnIn. (Default: 1000)
+                
+            fullChange : bool, optional
+                If true, a step in the sampler is considered after resampling all variables, 
+                instead of only a single one (Default: False)
         """
         self.bn = bn
         self.numSamples = numSamples
-        self.sampler = MarkovChainSampler(transitionModel, burnIn)
+        self.sampler = MarkovChainSampler(transitionModel, burnIn, fullChange)
     
     def marginals(self, variables, evidence=None):
         """
@@ -72,7 +74,7 @@ class MCMC(object):
     
 class MarkovChainSampler(object):
     
-    def __init__(self, transitionModel=None, burnIn=1000):
+    def __init__(self, transitionModel=None, burnIn=1000, fullChange = False):
         """
             Creates a markov chain sampler that creates samples given
             a network and a transition model.
@@ -85,9 +87,14 @@ class MarkovChainSampler(object):
                 
             burnIn : int
                 Number of samples to discard before actually collecting and returning
-                samples. Default 1000
+                samples. (Default 1000)
+                
+            fullChange : bool, optional
+                If true, a step is considered after resampling all variables, instead of
+                only a single one (Default: False)
         """
         self.burnIn = burnIn
+        self.fullChange = fullChange
         if not transitionModel:
 #            transitionModel = GibbsTransition()
             transitionModel = MetropolisHastingsTransition()
@@ -120,14 +127,15 @@ class MarkovChainSampler(object):
                 A dictionary containing the RandomNodes as keys and their current
                 instantiation as values.
         """
-        curSamples = 0
-        state = copy.copy(initialState)
-        while curSamples < self.burnIn:
-            state = self.transitionModel.step(state, evidence, bn)
-            curSamples += 1
         
+        variablesToChange = [node for node in bn.get_all_nodes() if node not in evidence]
+        curSamples = 0
+        state = dict(initialState)
+        while curSamples < self.burnIn:
+            state = self.transitionModel.step(state, variablesToChange, bn, self.fullChange)
+            curSamples += 1
         for i in xrange(numSamples):
-            state = self.transitionModel.step(state, evidence, bn)
+            state = self.transitionModel.step(state, variablesToChange, bn, self.fullChange)
             yield state
     
 class TransitionModel(object):
@@ -135,12 +143,12 @@ class TransitionModel(object):
         Abstract class defining a transition model.
     """
     
-    def step(self, currentState, evidence, bn, fullChange=False):
+    def step(self, currentState, variables, bn, fullChange=False):
         raise NotImplementedError("Should be overwritten by inheriting class.")
     
 class GibbsTransition(TransitionModel):
     
-    def step(self, currentState, evidence, bn, fullChange=False):
+    def step(self, currentState, variablesToChange, bn, fullChange=False):
         """
             A method that performs "one" markov step according to Gibbs sampling.
             (See "Probabilistic Graphical Models, Daphne Koller and Nir Friedman" (p.506))
@@ -151,9 +159,8 @@ class GibbsTransition(TransitionModel):
                 Dictionary containing the variables as keys and their current instantiation
                 as values.
             
-            evidence : dict
-                Dictionary containing the given variables as keys and their evidential
-                instantiations as vlaues.
+            variablesToChange : list
+                List containing the variables for which a new state needs to be sampled.
                 
             bn : BayesianNetwork
                 The network that is supposed to be samples.
@@ -162,21 +169,19 @@ class GibbsTransition(TransitionModel):
                 If True, will create a new sample by sampling all non-evidence
                 variables again. Default: False
         """
-        #Choose a variable to change
-        variables = [node for node in bn.get_all_nodes() if node not in evidence]
         if fullChange:
-            for v in variables:
-                currentState[v] = v.sample_value(currentState, bn.get_children(v))
+            for v in variablesToChange:
+                currentState[v.name] = v.sample_value(currentState, bn.get_children(v.name))
         else:
-            varToChange = random.choice(variables)
-            currentState[varToChange] = varToChange.sample_value(currentState, bn.get_children(varToChange))
+            varToChange = random.choice(variablesToChange)
+            currentState[varToChange.name] = varToChange.sample_value(currentState, bn.get_children(varToChange.name))
         
         return currentState
 
     
 class MetropolisHastingsTransition(TransitionModel):
     
-    def step(self, currentState, evidence, bn, fullChange = False):
+    def step(self, currentState, variablesToChange, bn, fullChange = False):
         """
             A method that performs "one" markov step according to MetropolisHasting sampling.
             (See "Probabilistic Graphical Models, Daphne Koller and Nir Friedman" (p.516))
@@ -187,9 +192,8 @@ class MetropolisHastingsTransition(TransitionModel):
                 Dictionary containing the variables as keys and their current instantiation
                 as values.
             
-            evidence : dict
-                Dictionary containing the given variables as keys and their evidential
-                instantiations as vlaues.
+            variablesToChange : list
+                List containing the variables for which a new state needs to be sampled.
                 
             bn : BayesianNetwork
                 The network that is supposed to be samples.
@@ -198,31 +202,29 @@ class MetropolisHastingsTransition(TransitionModel):
                 If True, will create a new sample by sampling all non-evidence
                 variables again. Default: False
         """
-        variables = [node for node in bn.get_all_nodes() if node not in evidence]
         if fullChange:
-            for v in variables:
-                proposedValue = v.sample_local(currentState[v])
+            for v in variablesToChange:
+                proposedValue = v.sample_local(currentState[v.name])
                 adoptedState = dict(currentState)
-                adoptedState[v] = proposedValue
-                proposedProb = v.get_markov_prob(proposedValue, bn.get_children(v), adoptedState)
-                currentProb = v.get_markov_prob(currentState[v], bn.get_children(v), currentState)
+                adoptedState[v.name] = proposedValue
+                proposedProb = v.get_markov_prob(proposedValue, bn.get_children(v.name), adoptedState)
+                currentProb = v.get_markov_prob(currentState[v.name], bn.get_children(v.name), currentState)
                 
-                with np.errstate(divide='ignore'):
-                    accept = np.min([1, proposedProb/currentProb])
-                if np.random.uniform() <= accept:
-                    currentState[v] = proposedValue
+                accept = min(1.0, proposedProb/currentProb)
+                if random.random() <= accept:
+                    currentState[v.name] = proposedValue
         else:
-            varToChange = np.random.choice(variables)
+            varToChange = random.choice(variablesToChange)
             proposedValue = varToChange.sample_local(currentState[varToChange])
             adoptedState = dict(currentState)
-            adoptedState[varToChange] = proposedValue
+            adoptedState[varToChange.name] = proposedValue
             proposedProb = varToChange.get_markov_prob(proposedValue, bn.get_children(varToChange), adoptedState)
             currentProb = varToChange.get_markov_prob(currentState[varToChange], bn.get_children(varToChange), currentState)
             
-            with np.errstate(divide='ignore'):
-                accept = np.min([1, proposedProb/currentProb])
-            if np.random.uniform() <= accept:
-                currentState[varToChange] = proposedValue
+            accept = min(1.0, proposedProb/currentProb)
+            
+            if random.random() <= accept:
+                currentState[varToChange.name] = proposedValue
             
         return currentState
             

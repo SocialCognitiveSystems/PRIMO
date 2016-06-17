@@ -16,6 +16,7 @@ from primo.inference.exact import VariableElimination
 from primo.inference.exact import FactorTree
 
 from primo.inference.mcmc import MCMC
+from primo.inference.mcmc import GibbsTransition
 
 import time
 
@@ -104,8 +105,14 @@ res = tree.marginals(["rain"])
 print "P(rain=True|winter=True, slippery_road=False): ", res.get_potential({"rain":["True"]}) 
 
 
+tree.set_evidence({"slippery_road":"True"})
+res = tree.marginals(["slippery_road"])
+
+print "P(slippery_road|slippery_road=True): ", res.get_potential()
+
 # Approximate inference:
-mc = MCMC(bn, numSamples=1000, burnIn=100)
+mc = MCMC(bn, transitionModel = GibbsTransition(),  numSamples=1000, burnIn=1000, fullChange=True)
+
 start = time.time()
 res = mc.marginals(["sprinkler"])
 print "Approximate marginals for sprinkler: ", res.potentials
