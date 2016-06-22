@@ -225,7 +225,7 @@ class DiscreteNode(RandomNode):
         
         for parentName in self.parentOrder:
             if parentName in parentValues:
-                if hasattr(parentValues[parentName], "__iter__"):
+                if isinstance(parentValues[parentName], list):
                     try:
                         index.append([self.parents[parentName].values.index(v) for v in parentValues[parentName]])
                     except ValueError:

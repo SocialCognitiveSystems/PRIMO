@@ -217,7 +217,7 @@ class DiscreteNode(unittest.TestCase):
         
         with self.assertRaises(KeyError) as cm:
             n._get_single_probability("Value1")
-        self.assertEqual(cm.exception.message, "parentValues need to specify a value for parent {} of node: {}.".format("Node2", "Node1"))
+        self.assertEqual(str(cm.exception), "'parentValues need to specify a value for parent {} of node: {}.'".format("Node2", "Node1"))
         
     def test_get_probability(self):
         n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])

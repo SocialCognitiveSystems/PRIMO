@@ -134,7 +134,7 @@ class MarkovChainSampler(object):
         while curSamples < self.burnIn:
             state = self.transitionModel.step(state, variablesToChange, bn, self.fullChange)
             curSamples += 1
-        for i in xrange(numSamples):
+        for i in range(numSamples):
             state = self.transitionModel.step(state, variablesToChange, bn, self.fullChange)
             yield state
     

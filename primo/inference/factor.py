@@ -5,7 +5,7 @@ Created on Thu May 12 17:06:58 2016
 
 @author: jpoeppel
 """
-
+from __future__ import division 
 import numpy as np
 import copy
 from primo.nodes import DiscreteNode
@@ -147,7 +147,7 @@ class Factor(object):
         res.variableOrder.append(variable)
         res.variables[variable] = 0
         res.values[variable] = copy.copy(values)
-        if not hasattr(evidence, '__iter__'):
+        if not isinstance(evidence, np.ndarray):
             if not evidence in values:
                 raise ValueError("Evidence {} is not one of the possible values ({}) for this variable.".format(evidence, values))
             res.potentials = np.zeros(len(values))
@@ -158,7 +158,7 @@ class Factor(object):
             res.potentials = np.copy(evidence)
         return res
         
-    def __div__(self, other):
+    def __truediv__(self, other):
         """
             Allows division of two factors. Currently other can only be a 
             trivial factor or a factor containing the same variables as this
@@ -177,6 +177,13 @@ class Factor(object):
         
         f1 = copy.deepcopy(self)
         f2 = copy.deepcopy(other)
+        
+        if len(f1.variables) == len(f2.variables) == 0:
+            if f2.potentials != 0:
+                f1.potentials = f1.potentials / f2.potentials
+            else:
+                f1.potentials = 0
+            return f1
             
         if len(f2.variables) == 0:
             with np.errstate(divide='ignore'):
@@ -297,7 +304,7 @@ class Factor(object):
             
             Parameter
             ---------
-            variables: String or RandomNode or [String,] or [RandomNode,]
+            variables: String, RandomNode, [String,], [RandomNode,], set(String,) or set(RandomNode)
                 Either a single variable or a list of variables that are to
                 be removed.
                 Variables can either be addressed by their names or by the
@@ -309,7 +316,7 @@ class Factor(object):
                 A new factor where the given variables has been summed out.
         """
         
-        if not hasattr(variables, '__iter__'):
+        if not isinstance(variables, (list,set)):
             variables = [variables]
             
         res = copy.deepcopy(self)

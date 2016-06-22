@@ -44,10 +44,11 @@ class Orderer(object):
             degrees = interactionG.degree()
             varToElim = sorted(degrees.items(), key=itemgetter(1))[0][0]
             res.append(varToElim.name)
-            for p in varToElim.parents:
-                for p2 in varToElim.parents:
-                    if p != p2:
-                        interactionG.add_edge(varToElim.parents[p], varToElim.parents[p2])
+            for p in interactionG[varToElim]:#.parents:
+                for p2 in interactionG[varToElim]:#varToElim.parents:
+                    if p != p2 and not p2 in interactionG[p]:#:
+#                        interactionG.add_edge(varToElim.parents[p], varToElim.parents[p2])
+                        interactionG.add_edge(p,p2)
             interactionG.remove_node(varToElim)
 #        succs = copy.copy(bn.graph.succ)
 #        preds = copy.copy(bn.graph.pred)

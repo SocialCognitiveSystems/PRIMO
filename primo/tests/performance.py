@@ -64,11 +64,11 @@ mcmc_ask = MCMC(bn, transitionModel=GibbsTransition(), numSamples=numSamples, bu
 timePrimo2Gibbs = timeit.timeit(lambda: mcmc_ask.marginals(["slippery_road"]), number=numRuns)
 
 
-print "Primo took for factorTree: {}".format(timePrimoFactor)
-print "Primo2 took for factorTree: {}".format(timePrimo2Factor)
+print("Primo took for factorTree: {}".format(timePrimoFactor))
+print("Primo2 took for factorTree: {}".format(timePrimo2Factor))
 
-print "Primo took for metropolisHasting: {}".format(timePrimoMetro)
-print "Primo2 took for metropolisHasting: {}".format(timePrimo2Metro)
+print("Primo took for metropolisHasting: {}".format(timePrimoMetro))
+print("Primo2 took for metropolisHasting: {}".format(timePrimo2Metro))
 
-print "Primo took for Gibbs: {}".format(timePrimoGibbs)
-print "Primo2 took for Gibbs: {}".format(timePrimo2Gibbs)
+print("Primo took for Gibbs: {}".format(timePrimoGibbs))
+print("Primo2 took for Gibbs: {}".format(timePrimo2Gibbs))

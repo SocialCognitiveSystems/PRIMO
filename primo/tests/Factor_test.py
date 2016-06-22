@@ -5,7 +5,7 @@ Created on Thu May 12 13:46:05 2016
 
 @author: jpoeppel
 """
-
+from __future__ import division 
 import unittest
 import numpy as np
 from primo.inference.factor import Factor
@@ -49,11 +49,17 @@ class FactorTest(unittest.TestCase):
                 self.assertTrue(v in f.values[p])
                 
     def test_create_from_samples(self):
+        from collections import OrderedDict
         samples = [{"A":"True", "B":"True"}, {"A":"True", "B":"False"},
                    {"A":"False", "B":"False"}, {"A":"True", "B":"True"}]
-        variableValues = {"A":["True","False"], "B":["True","False"]}
+        variableValues = OrderedDict()
+        variableValues["A"] = ["True","False"]
+        variableValues["B"] = ["True","False"]
         res = Factor.from_samples(samples, variableValues)
-        np.testing.assert_array_almost_equal(res.potentials, np.array([[0.5, 0.25], [0,0.25]]))
+        self.assertEqual(res.get_potential({"A":["True"], "B":["True"]}), 0.5)
+        self.assertEqual(res.get_potential({"A":["False"], "B":["True"]}), 0)
+        self.assertEqual(res.get_potential({"A":["True"], "B":["False"]}), 0.25)
+        self.assertEqual(res.get_potential({"A":["False"], "B":["False"]}), 0.25)
         
     def test_as_evidence(self):
         f = Factor.as_evidence("E", ["True","False"], "True")

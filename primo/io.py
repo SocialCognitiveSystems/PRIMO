@@ -39,7 +39,7 @@ class XMLBIFParser(object):
 #                curNode.add_parent(bn.get_node(given.text))
                 bn.add_edge(given.text, curName)
                 
-            table = np.array(map(float, definition.find("./TABLE").text.strip().split(" ")))
+            table = np.array(list(map(float, definition.find("./TABLE").text.strip().split(" "))))
             shape = [len(curNode.values)]
             for p in curNode.parentOrder:
                 shape.append(len(curNode.parents[p].values))
@@ -78,7 +78,7 @@ class XMLBIFParser(object):
             table = et.SubElement(defi, "TABLE")
             table.text = " ".join(str(e) for e in np.reshape(node.cpd, (np.size(node.cpd)), "F"))
 
-        f = open(filename, "w")
+        f = open(filename, "wb")
         f.write(et.tostring(root, pretty_print=True))
         f.close()
         

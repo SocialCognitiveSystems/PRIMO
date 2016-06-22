@@ -5,6 +5,8 @@ Created on Tue May 17 15:52:59 2016
 
 @author: jpoeppel
 """
+from __future__ import division 
+
 import networkx as nx
 
 from primo.inference.factor import Factor
@@ -124,7 +126,7 @@ class VariableElimination(object):
                     break                                        
 
         # Add evidence to buckets
-        for e in evidence.iterkeys():
+        for e in evidence.keys():
             bucketI = order.index(e)
             buckets[bucketI] = buckets[bucketI] * Factor.as_evidence(e, bn.get_node(e).values, evidence[e])
             
@@ -198,21 +200,19 @@ class FactorTree(object):
             variables = [v]+[n.name for n in moralG.neighbors(v)]
             clusterSeq.append(variables)
             moralG.remove_node(v)
-        moveTo = []
-        
+        swap= []
         #Remove nonmaximal clusters
         for i in range(len(clusterSeq)-1,0,-1):
             for j in range(i-1,-1,-1):
                 if set(clusterSeq[i]).issubset(set(clusterSeq[j])):
-                    moveTo.append((i,j))
+                    swap.append((clusterSeq[i], clusterSeq[j]))
                     break
-                
-        #Remove cluster i and place cluster j at it's location                    
-        for i,j in moveTo:
-            tmp = clusterSeq[j]
-            clusterSeq.remove(clusterSeq[i])
-            clusterSeq.insert(i, tmp)
-            clusterSeq.remove(tmp)
+        #Remove cluster i and place cluster j at it's location     
+        for rem, move in swap:
+            idx = clusterSeq.index(rem)
+            clusterSeq.remove(rem)
+            clusterSeq.insert(idx, move)
+            clusterSeq.remove(move)
         # Construct jointree
         tree = nx.Graph(messagesValid=False)
         if len(clusterSeq) > 0:
@@ -276,7 +276,7 @@ class FactorTree(object):
         """
         self.reset_factors()
         # Add evidence to buckets
-        for e in evidence.iterkeys():
+        for e in evidence.keys():
             evidenceFactor = Factor.as_evidence(e, self.bn.get_node(e).values, evidence[e])
             for node, nodeData in self.tree.nodes_iter(data=True):
                 if e in nodeData["variables"]:
@@ -361,7 +361,7 @@ class FactorTree(object):
         for neighbor in tree.neighbors_iter(curNode):
             if neighbor != parent:
                 self.pull_messages(tree, neighbor, curNode)
-                
+                      
         # Send message to parent
         if parent:
             newSeqFactor = tree.node[curNode]["factor"].marginalize(tree.node[curNode]["variables"]-tree[curNode][parent]["sep"])
