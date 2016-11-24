@@ -5,7 +5,7 @@ Created on Thu May 12 17:06:58 2016
 
 @author: jpoeppel
 """
-from __future__ import division 
+from __future__ import division
 import numpy as np
 import copy
 from primo.nodes import DiscreteNode
@@ -16,43 +16,42 @@ class Factor(object):
         Factors can be multiplied together and variables can be summed out
         (marginalised) of factors.
     """
-    
     def __init__(self):
         self.potentials = np.array([])
-         # Use a dictionary that stores the variable names as 
+         # Use a dictionary that stores the variable names as
         # keys and their corresponding dimensions as values
         self.variables = {}
         # Use a dictionary for the value lists with the variables as keys.
         self.values = {}
         self.variableOrder = []
-        
-        
+
+
     @classmethod
     def from_samples(cls, samples, variableValues):
         """
-            Creates a sample over the given variables and 
-            computes their potentials from the given samples. The resulting 
+            Creates a sample over the given variables and
+            computes their potentials from the given samples. The resulting
             factor will represent the joint probability of the given variables,
             potentially given some evidence that was used when generating the
             samples.
-            
+
             Parameters
             ----------
             samples : [dict,]
                 List of states where each state is represented with a dictionary
                 containing the variables as keys and their instantiation as value.
-            
+
             variableValues: dict
                 A dictionary containing the variables as keys and their value
                 lists as values over which this factor is defined.
-                
+
             Returns
             -------
                 Factor
                 A factor representing the joint probability of the given
                 variables according to the given samples.
         """
-        
+
         res = cls()
         shape = []
         for i, v in enumerate(variableValues):
@@ -68,19 +67,19 @@ class Factor(object):
             res.potentials[tuple(idx)] += 1
         res.potentials /= np.sum(res.potentials)
         return res
-        
-        
+
+
     @classmethod
     def get_trivial(cls, potential=1.0):
         """
             Helper function to create a trivial factor with a given potential.
             A trivial factor does not represent any variables anymore.
-            
+
             Parameter
             ---------
             potential : Float, optional
                 The potential this factor should be initialized with.
-                
+
             Returns
             -------
                 Factor
@@ -89,18 +88,18 @@ class Factor(object):
         res = cls()
         res.potentials = potential
         return res
-        
+
     @classmethod
     def from_node(cls, node):
         """
             Helper function that allows to create a factor from a random node.
             Currently only DiscreteNodes are supported.
-            
+
             Paramter
             --------
             node : DiscreteNode
                 The node which is used to create the factor.
-                
+
             Returns
             -------
                 Factor
