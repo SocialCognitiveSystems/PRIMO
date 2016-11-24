@@ -7,6 +7,7 @@ Setup skript for installing primo and it's dependencies.
 """
 
 from setuptools import setup
+import sys
 
 if sys.argv[-1] == 'setup.py':
     print("To install, run 'python setup.py install'")
