@@ -25,7 +25,7 @@ setup(name="primo",
                        "manipulation, e.g. by the inference algorithm. In turn the inference "\
                        "algorithms have been rewritten and partly extended. For most if not "\
                        "all use cases this implementation should be easier to use and more "\
-                       "performant than the original."
+                       "performant than the original.",
       author="Jan Pöppel",
       author_email="jpoeppel@techfak.uni-bielefeld.de",
       packages = ["primo"],
