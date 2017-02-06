@@ -10,7 +10,7 @@ import sys
 import timeit
 import copy
 
-testfile = "/homes/jpoeppel/repo/PRIMO2/primo/tests/slippery.xbif"
+testfile = "/homes/jpoeppel/repo/PRIMO2/primo2/tests/slippery.xbif"
 burnIn = 1000
 numSamples = 1000
 numRuns = 100
@@ -46,11 +46,11 @@ timePrimoGibbs = timeit.timeit(lambda: mcmc_ask.calculate_PriorMarginal([slipper
 
 #Reload modules
 
-from primo.io import XMLBIFParser
-from primo.inference.mcmc import MCMC
-from primo.inference.mcmc import MetropolisHastingsTransition
-from primo.inference.mcmc import GibbsTransition
-from primo.inference.exact import FactorTree
+from primo2.io import XMLBIFParser
+from primo2.inference.mcmc import MCMC
+from primo2.inference.mcmc import MetropolisHastingsTransition
+from primo2.inference.mcmc import GibbsTransition
+from primo2.inference.exact import FactorTree
 
 bn = XMLBIFParser.parse(testfile)
 

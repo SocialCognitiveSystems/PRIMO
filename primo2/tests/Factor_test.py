@@ -8,8 +8,8 @@ Created on Thu May 12 13:46:05 2016
 from __future__ import division 
 import unittest
 import numpy as np
-from primo.inference.factor import Factor
-from primo.nodes import DiscreteNode
+from primo2.inference.factor import Factor
+from primo2.nodes import DiscreteNode
 
 class FactorTest(unittest.TestCase):
 

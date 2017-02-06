@@ -15,7 +15,7 @@ if sys.argv[-1] == 'setup.py':
 
 version = 0.5
 
-setup(name="primo",
+setup(name="primo2",
       version=version,
       description="(Partial) reimplementation of PRobabilistic Inference MOdules",
       long_description="This project is a (partial) reimplementation of the original " \
@@ -29,5 +29,5 @@ setup(name="primo",
                        "performant than the original.",
       author="Jan Pöppel",
       author_email="jpoeppel@techfak.uni-bielefeld.de",
-      packages = ["primo"],
+      packages = ["primo2", "primo2.inference"],
       install_requires=["numpy", "networkx", "lxml"])

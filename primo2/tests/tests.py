@@ -8,8 +8,8 @@ Created on Wed May 18 13:42:22 2016
 
 import numpy as np
 
-from primo.nodes import DiscreteNode
-from primo.inference.factor import Factor
+from primo2.nodes import DiscreteNode
+from primo2.inference.factor import Factor
 
 
 wet = DiscreteNode("wet_grass")

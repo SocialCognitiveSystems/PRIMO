@@ -9,8 +9,8 @@ Created on Fri May 13 16:29:52 2016
 import lxml.etree as et
 import numpy as np
 
-from primo.network import BayesianNetwork
-from primo.nodes import DiscreteNode
+from primo2.network import BayesianNetwork
+from primo2.nodes import DiscreteNode
 
 class XMLBIFParser(object):
         

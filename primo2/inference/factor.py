@@ -8,7 +8,7 @@ Created on Thu May 12 17:06:58 2016
 from __future__ import division
 import numpy as np
 import copy
-from primo.nodes import DiscreteNode
+from primo2.nodes import DiscreteNode
 
 class Factor(object):
     """

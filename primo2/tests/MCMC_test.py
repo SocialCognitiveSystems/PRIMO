@@ -8,11 +8,11 @@ Created on Mon May 23 16:16:00 2016
 
 import unittest
 
-from primo.io import XMLBIFParser
+from primo2.io import XMLBIFParser
 
-from primo.inference.mcmc import MCMC
-from primo.inference.mcmc import GibbsTransition
-from primo.inference.mcmc import MetropolisHastingsTransition
+from primo2.inference.mcmc import MCMC
+from primo2.inference.mcmc import GibbsTransition
+from primo2.inference.mcmc import MetropolisHastingsTransition
 
 class MCMCTest(unittest.TestCase):
     
@@ -22,7 +22,7 @@ class MCMCTest(unittest.TestCase):
 class GibbsTransitionTest(unittest.TestCase):
     
     def setUp(self):
-        self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        self.bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         self.initialState = {n:n.sample_local(None) for n in self.bn.get_all_nodes()}
     
     def test_step_no_evidence(self):
@@ -70,7 +70,7 @@ class GibbsTransitionTest(unittest.TestCase):
 class MetropolisHastingTransitionTest(unittest.TestCase):
     
     def setUp(self):
-        self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        self.bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         self.initialState = {n:n.sample_local(None) for n in self.bn.get_all_nodes()}
     
     def test_step_no_evidence(self):

@@ -10,15 +10,15 @@ Created on Thu May 12 13:16:46 2016
 import unittest
 import numpy as np
 
-from primo.network import BayesianNetwork
-from primo.io import XMLBIFParser
-from primo.nodes import DiscreteNode
+from primo2.network import BayesianNetwork
+from primo2.io import XMLBIFParser
+from primo2.nodes import DiscreteNode
 
 class XMLBIFTest(unittest.TestCase):
     
 
     def test_readXMLBIF(self):
-        bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         
         nodes = bn.get_all_nodes()        
         self.assertTrue("slippery_road" in nodes)
@@ -47,14 +47,14 @@ class XMLBIFTest(unittest.TestCase):
 #        np.testing.assert_array_almost_equal(wetNode.cpd, cpt)
         
     def test_readXMLBIF_different_parent_sizes(self):
-        bn = XMLBIFParser.parse("primo/tests/testfile.xbif")
+        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif")
 #        nodes = bn.get_all_nodes()
         johnNode = bn.get_node("John_calls")
         cpt = np.array([[[0.8,0.5,0.7],[0.6,0.2,0.1]],[[0.2,0.5,0.3],[0.4,0.8,0.9]]])
         np.testing.assert_array_almost_equal(johnNode.cpd, cpt)
         
     def test_writeXMLBIF_simple(self):
-        path= "primo/tests/test.xbif"
+        path= "primo2/tests/test.xbif"
         bn = BayesianNetwork()
         n1 = DiscreteNode("a")
         n2 = DiscreteNode("b", ["happy", "sad"])
@@ -76,8 +76,8 @@ class XMLBIFTest(unittest.TestCase):
         os.remove(path)       
             
     def test_writeXMLBIF(self):
-        testPath = "primo/tests/testSlippery.xbif"
-        bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        testPath = "primo2/tests/testSlippery.xbif"
+        bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         XMLBIFParser.write(bn, testPath)
         bn2 = XMLBIFParser.parse(testPath)
         for n in bn2.get_all_nodes():

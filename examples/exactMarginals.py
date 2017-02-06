@@ -7,16 +7,16 @@ primo module
 @author: jpoeppel
 """
 import numpy as np
-from primo.network import BayesianNetwork
-from primo.nodes import DiscreteNode
+from primo2.network import BayesianNetwork
+from primo2.nodes import DiscreteNode
 
-from primo.io import XMLBIFParser
+from primo2.io import XMLBIFParser
 
-from primo.inference.exact import VariableElimination
-from primo.inference.exact import FactorTree
+from primo2.inference.exact import VariableElimination
+from primo2.inference.exact import FactorTree
 
-from primo.inference.mcmc import MCMC
-from primo.inference.mcmc import GibbsTransition
+from primo2.inference.mcmc import MCMC
+from primo2.inference.mcmc import GibbsTransition
 
 import time
 

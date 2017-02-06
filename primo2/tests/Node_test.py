@@ -7,7 +7,7 @@ Created on Thu May 12 13:42:51 2016
 """
 
 import unittest
-from primo import nodes
+from primo2 import nodes
 import numpy as np
 
 class RandomNodeTest(unittest.TestCase):

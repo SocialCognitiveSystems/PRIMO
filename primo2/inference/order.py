@@ -9,7 +9,7 @@ Created on Tue May 17 10:24:51 2016
 import copy
 import networkx as nx
 from operator import itemgetter
-from primo.network import BayesianNetwork
+from primo2.network import BayesianNetwork
 
 class Orderer(object):
     """

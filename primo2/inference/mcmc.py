@@ -7,7 +7,7 @@ Created on Fri May 20 16:18:09 2016
 """
 
 import random
-from primo.inference.factor import Factor
+from primo2.inference.factor import Factor
 
 class MCMC(object):
     

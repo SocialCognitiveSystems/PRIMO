@@ -7,8 +7,8 @@ Created on Thu May 12 13:13:54 2016
 """
 
 import unittest
-from primo.network import BayesianNetwork
-from primo.nodes import RandomNode
+from primo2.network import BayesianNetwork
+from primo2.nodes import RandomNode
 
 class BayesNetTest(unittest.TestCase):
     

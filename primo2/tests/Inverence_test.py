@@ -8,16 +8,16 @@ Created on Thu May 12 13:47:59 2016
 
 import unittest
 import numpy as np
-from primo.network import BayesianNetwork
-from primo.io import XMLBIFParser
-from primo.inference.order import Orderer
-from primo.inference.exact import VariableElimination
-from primo.inference.exact import FactorTree
+from primo2.network import BayesianNetwork
+from primo2.io import XMLBIFParser
+from primo2.inference.order import Orderer
+from primo2.inference.exact import VariableElimination
+from primo2.inference.exact import FactorTree
 
 class EliminationOderTest(unittest.TestCase):
     
     def test_min_degree_elimination_order(self):
-        bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         order = Orderer.get_min_degree_order(bn)
         #Test for all possible/equivalent orders since the actual order might is not
         #determined based on the random nature hash in Python3
@@ -56,7 +56,7 @@ class EliminationOderTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "Only Bayesian Networks are currently supported.")
         
     def test_random_elimination_order(self):
-        bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         order = Orderer.get_random_order(bn)
         variables = ["slippery_road", "winter", "rain", "sprinkler", "wet_grass"]
         self.assertEqual(len(order), len(variables))
@@ -71,11 +71,11 @@ class EliminationOderTest(unittest.TestCase):
 class VariableEliminationTest(unittest.TestCase):
     
     def setUp(self):
-        self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        self.bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         
     def test_empty_cpt(self):
         bn = BayesianNetwork()
-        from primo.nodes import DiscreteNode
+        from primo2.nodes import DiscreteNode
         n1 = DiscreteNode("a")
         n2 = DiscreteNode("b")
         bn.add_node(n1)
@@ -136,12 +136,12 @@ class FactorEliminationTest(unittest.TestCase):
     
     
     def setUp(self):
-        self.bn = XMLBIFParser.parse("primo/tests/slippery.xbif")
+        self.bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         
         
     def test_empty_cpt(self):
         bn = BayesianNetwork()
-        from primo.nodes import DiscreteNode
+        from primo2.nodes import DiscreteNode
         n1 = DiscreteNode("a")
         n2 = DiscreteNode("b")
         bn.add_node(n1)

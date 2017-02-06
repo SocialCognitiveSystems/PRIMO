@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of PRIMO -- Probabilistic Inference Modules.
-# Copyright (C) 2013-2015 Social Cognitive Systems Group, 
+# Copyright (C) 2013-2016 Social Cognitive Systems Group, 
 #                         Faculty of Technology, Bielefeld University
 #
 # This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 import networkx as nx
 
-import primo.nodes
+import primo2.nodes
 
 class BayesianNetwork(object):
 
@@ -32,7 +32,7 @@ class BayesianNetwork(object):
         self.name = "" #Only used to be compatible with XMLBIF
 
     def add_node(self, node):
-        if isinstance(node, primo.nodes.RandomNode):
+        if isinstance(node, primo2.nodes.RandomNode):
             if node.name in self.node_lookup:
                 raise ValueError("The network already contains a node called Node1")
             self.node_lookup[node.name]=node
