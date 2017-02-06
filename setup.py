@@ -1,5 +1,24 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# This file is part of PRIMO2 -- Probabilistic Inference Modules.
+# Copyright (C) 2013-2017 Social Cognitive Systems Group, 
+#                         Faculty of Technology, Bielefeld University
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the Lesser GNU General Public License as 
+# published by the Free Software Foundation, either version 3 of the 
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public 
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+
 """
 Created on Thu Nov 24 15:18:15 2016
 Setup skript for installing primo and it's dependencies.
@@ -20,7 +39,7 @@ setup(name="primo2",
       description="(Partial) reimplementation of PRobabilistic Inference MOdules",
       long_description="This project is a (partial) reimplementation of the original " \
                        "probabilistic inference modules which can be found at " \
-                       "https://github.com/mbaumBielefeld/PRIMO. This reimplementation "\
+                       "https://github.com/hbuschme/PRIMO. This reimplementation "\
                        "follows the same general idea, but restructured and unified the "\
                        "underlying datatypes to allow a more concise API and more efficient "\
                        "manipulation, e.g. by the inference algorithm. In turn the inference "\

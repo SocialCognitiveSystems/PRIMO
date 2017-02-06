@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# This file is part of PRIMO -- Probabilistic Inference Modules.
-# Copyright (C) 2013-2016 Social Cognitive Systems Group, 
+# This file is part of PRIMO2 -- Probabilistic Inference Modules.
+# Copyright (C) 2013-2017 Social Cognitive Systems Group, 
 #                         Faculty of Technology, Bielefeld University
 #
 # This program is free software: you can redistribute it and/or modify
