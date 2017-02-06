@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<!--
+  Bayesian network in XMLBIF v0.3 (BayesNet Interchange Format)
+  Produced by SamIam http://reasoning.cs.ucla.edu/samiam
+  Output created 20.06.2014 19:04:15
+-->
+
+<BIF VERSION="0.3">
+<NETWORK>
+  <NAME>bayesiannetwork</NAME>
+
+  <VARIABLE TYPE="nature">
+    <NAME>slippery_road</NAME>
+    <OUTCOME>true</OUTCOME>
+    <OUTCOME>false</OUTCOME>
+    <PROPERTY>position = (689, -29)</PROPERTY>
+  </VARIABLE>
+
+  <VARIABLE TYPE="nature">
+    <NAME>sprinkler</NAME>
+    <OUTCOME>true</OUTCOME>
+    <OUTCOME>false</OUTCOME>
+    <PROPERTY>position = (102, -243)</PROPERTY>
+  </VARIABLE>
+
+  <VARIABLE TYPE="nature">
+    <NAME>rain</NAME>
+    <OUTCOME>true</OUTCOME>
+    <OUTCOME>false</OUTCOME>
+    <PROPERTY>position = (520, -237)</PROPERTY>
+  </VARIABLE>
+
+  <VARIABLE TYPE="nature">
+    <NAME>wet_grass</NAME>
+    <OUTCOME>true</OUTCOME>
+    <OUTCOME>false</OUTCOME>
+    <PROPERTY>position = (326, -20)</PROPERTY>
+  </VARIABLE>
+
+  <VARIABLE TYPE="nature">
+    <NAME>winter</NAME>
+    <OUTCOME>true</OUTCOME>
+    <OUTCOME>false</OUTCOME>
+    <PROPERTY>position = (318, -399)</PROPERTY>
+  </VARIABLE>
+
+  <DEFINITION>
+    <FOR>slippery_road</FOR>
+    <GIVEN>rain</GIVEN>
+    <TABLE>0.7 0.3 0.0 1.0 </TABLE>
+  </DEFINITION>
+
+  <DEFINITION>
+    <FOR>sprinkler</FOR>
+    <GIVEN>winter</GIVEN>
+    <TABLE>0.2 0.8 0.75 0.25 </TABLE>
+  </DEFINITION>
+
+  <DEFINITION>
+    <FOR>rain</FOR>
+    <GIVEN>winter</GIVEN>
+    <TABLE>0.8 0.2 0.1 0.9 </TABLE>
+  </DEFINITION>
+
+  <DEFINITION>
+    <FOR>wet_grass</FOR>
+    <GIVEN>sprinkler</GIVEN>
+    <GIVEN>rain</GIVEN>
+    <TABLE>0.95 0.05 0.1 0.9 0.8 0.2 0.0 1.0 </TABLE>
+  </DEFINITION>
+
+  <DEFINITION>
+    <FOR>winter</FOR>
+    <TABLE>0.6 0.4 </TABLE>
+  </DEFINITION>
+
+</NETWORK>
+</BIF>
