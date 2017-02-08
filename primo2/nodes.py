@@ -34,7 +34,7 @@ class RandomNode(object):
         self.cpd = 1
         
     def set_cpd(self, cpd):
-        raise NotImplementedError("Called unimplemented Method")
+        raise NotImplementedError("Called unimplemented method.")
         
         
     def __eq__(self, other):
@@ -65,11 +65,10 @@ class RandomNode(object):
         
     def __str__(self):
         return self.name
-#        
+
     def __repr__(self):
         return self.name
         
-
 
 class DiscreteNode(RandomNode):
     

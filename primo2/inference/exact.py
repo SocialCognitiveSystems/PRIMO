@@ -221,7 +221,7 @@ class FactorTree(object):
                 if set(clusterSeq[i]).issubset(set(clusterSeq[j])):
                     swap.append((clusterSeq[i], clusterSeq[j]))
                     break
-        #Remove cluster i and place cluster j at it's location     
+        #Remove cluster i and place cluster j at its location     
         for rem, move in swap:
             idx = clusterSeq.index(rem)
             clusterSeq.remove(rem)

@@ -34,7 +34,7 @@ class BayesianNetwork(object):
     def add_node(self, node):
         if isinstance(node, primo2.nodes.RandomNode):
             if node.name in self.node_lookup:
-                raise ValueError("The network already contains a node called Node1")
+                raise ValueError("The network already contains a node called '{}'.".format(node.name))
             self.node_lookup[node.name]=node
             self.graph.add_node(node)
         else:
@@ -59,7 +59,7 @@ class BayesianNetwork(object):
             self.graph.add_edge(self.node_lookup[fromName], self.node_lookup[toName])
             self.node_lookup[toName].add_parent(self.node_lookup[fromName])
         else:
-            raise Exception("Tried to add an Edge between two Nodes of which at least one was not contained in the Bayesnet")
+            raise Exception("Tried to add an Edge between two Nodes of which at least one was not contained in the BayesianNetwork")
 
 
     def get_node(self, node_name):
@@ -74,9 +74,9 @@ class BayesianNetwork(object):
     def get_all_node_names(self):
         return self.node_lookup.keys()
 
-    def get_nodes(self, node_names=[]):
+    def get_nodes(self, node_names=None):
         nodes = []
-        if not node_names:
+        if node_names is None:
             nodes = self.graph.nodes()
         else:
             for node_name in node_names:
