@@ -306,20 +306,20 @@ class FactorTree(object):
         """
         self.reset_factors()
         #Initialice temporary marginals to None
-        tmp = {e: None for e in evidence}
+        oldMarginals = {e: None for e in evidence}
         if softPosteriors:
             #Compute the old/naive marignals for the evidence values which are
             #required to compute the proper likelihood ratio factor below
             self.calculate_messages()
             for e in evidence:
-                tmp[e] = self.marginals([e]).potentials
+                oldMarginals[e] = self.marginals([e]).potentials
             self.reset_factors()
         
         # Add evidence to buckets
         for e in evidence:
             evidenceFactor = Factor.as_evidence(e, 
                                     self.bn.get_node(e).values, 
-                                    evidence[e], oldMarginals=tmp[e])
+                                    evidence[e], oldMarginals=oldMarginals[e])
             for node, nodeData in self.tree.nodes_iter(data=True):
                 if e in nodeData["variables"]:
                     nodeData["factor"] = nodeData["factor"] * evidenceFactor
