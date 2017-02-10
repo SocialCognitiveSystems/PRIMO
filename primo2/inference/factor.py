@@ -212,7 +212,7 @@ class Factor(object):
 #            res.potentials = odd * oldOdd
         return res
         
-    
+    #TODO pydocs!
     def __truediv__(self, other):
         if not set(other.variableOrder).issubset(set(self.variableOrder)):
             raise ValueError("The divisor's variable are not a subset of the divident's variables: Divisor: {}, Dividend: {}".format(other.variableOrder, self.variableOrder))
