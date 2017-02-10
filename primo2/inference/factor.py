@@ -167,14 +167,16 @@ class Factor(object):
                 The probabilities in the array need to be in the same order as 
                 given in the values.
             oldMarginals: np.array,[Float,], optional.
+                This is only used when evidence is an np.array!
                 List like structure containing the old marginals of the evidence
                 variable. If this is given, the provided evidence will be 
                 interpreted as "all things considered" soft evidence 
-                (cf. Darwiche's Modeling and Reasoning with Bayesian Networks 
-                p.40), i.e. the soft evidence is interpreted as the desired
-                new posterior marginal for the given variable. 
-                In this case, the likelihood ratio required to reach the desired
-                posteriors is computed and just as evidence factor.
+                (cf. "Modeling and Reasoning with Bayesian Networks" by 
+                Adnan Darwiche Chapter 3.6.1), i.e. the soft evidence is 
+                interpreted as the desired new posterior marginal for the 
+                given variable. In this case, the likelihood ratio required to 
+                reach the desired posteriors is computed and just as evidence 
+                factor.
                 If oldMarginals is not given, the evidence is interpreted 
                 as "nothing else considered" soft evidence 
                 (cf. pp.41 same book), i.e. the evidence is directly 
