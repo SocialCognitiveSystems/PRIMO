@@ -281,8 +281,6 @@ class FactorTree(object):
         
         
     def set_evidence(self, evidence, softPosteriors=False):
-        #TODO make it possible to disinguish between setting soft posterior
-        #and soft ratios as evidence
         """
             Sets the given evidence in the factor tree. This will trigger a 
             recomputation of the messages given this evidence.
