@@ -22,6 +22,7 @@
 import unittest
 import numpy as np
 from primo2.network import BayesianNetwork
+from primo2.nodes import DiscreteNode
 from primo2.io import XMLBIFParser
 from primo2.inference.order import Orderer
 from primo2.inference.exact import VariableElimination
@@ -218,6 +219,25 @@ class FactorEliminationTest(unittest.TestCase):
         resFactor = ft.marginals(["wet_grass"])
         np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.02, 0.98]))
         
+    def test_jointree_marginal_soft_evidence(self):
+        bn = BayesianNetwork()
+        cloth = DiscreteNode("cloth", ["green","blue", "red"])
+        sold = DiscreteNode("sold")
+        
+        bn.add_node(cloth)
+        bn.add_node(sold)
+        
+        bn.add_edge("cloth", "sold")
+        
+        cloth.set_cpd(np.array([0.3,0.3,0.4]))
+        sold.set_cpd(np.array([[0.4, 0.4, 0.8],
+                                [0.6, 0.6, 0.2]]))
+            
+        tree = FactorTree.create_jointree(bn)
+        tree.set_evidence({"cloth": np.array([0.7,0.25,0.05])}, softPosteriors=True)
+        
+        np.testing.assert_array_almost_equal(tree.marginals(["cloth"]).get_potential(), np.array([0.7,0.25,0.05]))
+        np.testing.assert_array_almost_equal(tree.marginals(["sold"]).get_potential(), np.array([0.42,0.58]))
         
 if __name__ == "__main__":
     #Workaround so that this script also finds the resource files when run directly

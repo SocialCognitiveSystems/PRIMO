@@ -40,6 +40,20 @@ class Factor(object):
         self.variableOrder = []
 
 
+    def invert(self):
+        res = copy.deepcopy(self)
+        if len(res.variables) == 0:
+            with np.errstate(divide="raise"):
+                try:
+                    res.potentials = 1.0/res.potentials
+                except ZeroDivisionError:
+                    res.potentials = 0
+        else:
+            with np.errstate(divide='ignore', invalid="ignore"):
+                res.potentials = 1.0 / res.potentials
+                res.potentials[res.potentials==np.inf] = 0
+        return res
+
     @classmethod
     def from_samples(cls, samples, variableValues):
         """
@@ -133,10 +147,12 @@ class Factor(object):
         return res
         
     @classmethod
-    def as_evidence(cls, variable, values, evidence):
+    def as_evidence(cls, variable, values, evidence, oldMarginals=None):
         """
             Creates an "evidence factor" which is used to introduce hart and
-            soft evidence into the inference algorithms.
+            soft evidence into the inference algorithms. In case of soft evidence
+            the required ratio is computed in order to shift the posterior
+            probability of the evidence node to the desired values.
             
             Parameters
             ---------
@@ -146,9 +162,25 @@ class Factor(object):
                 List of possible values/outcomes of that variable
             evidence: String or np.array
                 The actual evidence that was observed. If a string is given,
-                hard evidence is assumed for that given outcome. Otherwise,
-                the evidence is set according to the given array. The probabilities
-                in the array need to be in the same order as given in the values
+                hard evidence is assumed for that given outcome. 
+                Otherwise, the evidence is set according to the given array. 
+                The probabilities in the array need to be in the same order as 
+                given in the values.
+            oldMarginals: np.array,[Float,], optional.
+                This is only used when evidence is an np.array!
+                List like structure containing the old marginals of the evidence
+                variable. If this is given, the provided evidence will be 
+                interpreted as "all things considered" soft evidence 
+                (cf. "Modeling and Reasoning with Bayesian Networks" by 
+                Adnan Darwiche Chapter 3.6.1), i.e. the soft evidence is 
+                interpreted as the desired new posterior marginal for the 
+                given variable. In this case, the likelihood ratio required to 
+                reach the desired posteriors is computed and just as evidence 
+                factor.
+                If oldMarginals is not given, the evidence is interpreted 
+                as "nothing else considered" soft evidence 
+                (cf. pp.41 same book), i.e. the evidence is directly 
+                interpeted as likelihood ratio.
                 
             Returns
             -------
@@ -162,16 +194,72 @@ class Factor(object):
         res.values[variable] = copy.copy(values)
         if not isinstance(evidence, np.ndarray):
             if not evidence in values:
-                raise ValueError("Evidence {} is not one of the possible values ({}) for this variable.".format(evidence, values))
+                raise ValueError("Evidence {} is not one of the possible " \
+                                 "values ({}) for this variable."
+                                .format(evidence, values))
             res.potentials = np.zeros(len(values))
             res.potentials[values.index(evidence)] = 1.0
         else:
             if len(evidence) != len(values):
-                raise ValueError("The number of evidence strength ({}) does not correspont to the number of values ({})".format(len(evidence),len(values)))
-            res.potentials = np.copy(evidence)
+                raise ValueError("The number of evidence strength ({}) " \
+                            "does not correspont to the number of values ({})"
+                            .format(len(evidence),len(values)))
+            if oldMarginals is not None:
+                #Interpret given (soft) evidence as desired posterior
+                #In this case construct the required likelihood ratio
+                #loosely according to Bayesian Artificial Intelligence by 
+                #Kevin B. Korb and Ann E. Nicholson (pp.63), but extended to
+                #work for non-binary values and hard evidence as well
+                res.potentials = np.ones(np.shape(evidence))
+                #Select the highest value as maximum so that this will also work
+                #for specifying hard evidence the same way as soft evidence
+                refIndex = np.argmax(evidence)
+                refEvidence = np.max(evidence)
+                for i,v in enumerate(values):
+                    if i == refIndex:
+                        #Just fix the reference Value to 1.
+                        #Since only the ratio between the different evidence 
+                        #values influences the posterior, we can choose one 
+                        #value and just adjust the others relative to this.
+                        res.potentials[i] = 1
+                    else:
+                        #Catch the case that oldValues[i] == 0
+                        #=> in that case potential[i] = 0
+                        if oldMarginals[i] == 0:
+                            res.potentials[i] = 0
+                        else:
+                            res.potentials[i] = evidence[i]/oldMarginals[i] \
+                                              *oldMarginals[refIndex]/refEvidence 
+            else:
+                #Interpet given (soft) evidence as proportion
+                res.potentials = np.copy(evidence)
         return res
         
     def __truediv__(self, other):
+        """
+            Allows division of two factors by inverting the divisor and 
+            multiplying it to the dividend. The divisor's variables must be a 
+            subset of the dividend's variables for this to work since the 
+            expected behaviour is not specified otherwise.
+            
+            Parameter
+            --------
+            other : Factor
+                The factor that this factor is divided with.
+                
+            Returns
+            -------
+                Factor
+                A new factor representing the quotient of the division.
+        """
+        if not set(other.variableOrder).issubset(set(self.variableOrder)):
+            raise ValueError("The divisor's variable are not a subset of the " \
+                             "divident's variables: Divisor: {}, Dividend: {}"
+                            .format(other.variableOrder, self.variableOrder))
+        return self * other.invert()
+    
+    #TODO consider removing this
+    def __truediv__OLD(self, other):
         """
             Allows division of two factors. Currently other can only be a 
             trivial factor or a factor containing the same variables as this
@@ -206,6 +294,8 @@ class Factor(object):
             return f1
         
         if set(f1.variableOrder) != set(f2.variableOrder):
+            print f1.variableOrder
+            print f2.variableOrder
             raise ValueError("The divisor has different variables than the dividend.")
             
         if f1.variableOrder != f2.variableOrder:
@@ -237,8 +327,9 @@ class Factor(object):
             the other factor.
             
             Also value order is currently NOT checked between the two factors,
-            i.e. if one factor orders the values of some variable as "True", "False"
-            and another sorts them "False", "True" the results will be wrong!
+            i.e. if one factor orders the values of some variable as "True", 
+            "False" and another sorts them "False", "True" 
+            the results will be wrong!
             
             Paramter
             -------
@@ -273,15 +364,11 @@ class Factor(object):
                 f1.potentials = np.repeat(f1.potentials, len(other.values[v]), axis = ax)
                 f1.variableOrder.append(v)
                 
-#        print "f1.variableOrder: ", f1.variableOrder
-#        print "f1 potentials: ", f1.potentials
-#        print "f2 variableOrder before: ", f2.variableOrder
         # Ensure factor2 has the same size as factor1
         for v in f1.variableOrder:
             if not v in f2.variables:
                 f2.potentials = np.expand_dims(f2.potentials, f1.variables[v])
                 f2.potentials = np.repeat(f2.potentials, len(f1.values[v]), axis = f1.variables[v])
-#                print "inserting {} at {}".format(v, f1.variables[v])
                 #Fix variable order!
                 f2.variableOrder.insert(f1.variables[v], v)
                 for idx, v in enumerate(f2.variableOrder):
@@ -289,8 +376,6 @@ class Factor(object):
             else:
                 #Roll axes around so that they align. Cannot use f2.variables[v] since
                 # new axes might have been inserted in the meantime
-#                print "rollaxis for {} from {} to {}".format(v, f2.variableOrder.index(v), f1.variables[v])
-#                print "potentials before: ", f2.potentials
                 f2.potentials = np.rollaxis(f2.potentials, f2.variableOrder.index(v), f1.variables[v])
                 
                 f2.variableOrder.remove(v)
@@ -298,10 +383,6 @@ class Factor(object):
                 for idx, v in enumerate(f2.variableOrder):
                     f2.variables[v] = idx
 
-#        print "f2.variableOrder: ", f2.variableOrder
-#        print "f2 potentials: ", f2.potentials
-#        print "f1 potentials: ", f1.potentials                
-                
         # Pointwise multiplication which results in a factor where all instantiations
         # are compatible to the instantiations of factor1 and factor2
         # See Definition 6.3 in "Modeling and Reasoning with Bayesian Networks" - Adnan Darwiche Chapter 6

@@ -88,8 +88,12 @@ class FactorTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "The number of evidence strength (3) does not correspont to the number of values (2)")
                 
                 
+    def test_invert(self):
+        f1 = Factor.from_node(self.n1)
+        f2 = f1.invert()
+        np.testing.assert_array_almost_equal(f2.potentials, np.array([10.0/3,10.0/7]))
+    
     def test_division_with_trivial_factor(self):
-        
         f1 = Factor.get_trivial()
         f2 = Factor.from_node(self.n1)
         f3 = f2 / f1
@@ -116,8 +120,10 @@ class FactorTest(unittest.TestCase):
         f1 = Factor.from_node(self.n1)
         f2 = Factor.from_node(self.n2)
         with self.assertRaises(ValueError) as cm:
-            f3 = f2 / f1
-        self.assertEqual(str(cm.exception), "The divisor has different variables than the dividend.")
+            f3 = f1 / f2
+        self.assertEqual(str(cm.exception), "The divisor's variable are not a "\
+                         "subset of the divident's variables: Divisor: {}, "\
+                         "Dividend: {}".format(f2.variableOrder, f1.variableOrder))
                 
     def test_multiplication_with_trivial_factor(self):
         """
@@ -164,6 +170,24 @@ class FactorTest(unittest.TestCase):
             self.assertTrue(v in f3.values[self.n2])
 #            self.assertTrue(v in f4.values[self.n2])
             
+    def test_division_partial_divisor(self):
+        f1 = Factor()
+        f1.variables["a"] = 0
+        f1.variables["b"] = 1
+        f1.variableOrder = ["a","b"]
+        f1.values = {"a":["a1","a2","a3"], "b":["b1","b2"]}
+        f1.potentials = np.array([[0.5,0.2],[0,0],[0.3,0.45]])
+        
+        f2 = Factor()
+        f2.variables["a"] = 0
+        f2.variableOrder = ["a"]
+        f2.values = {"a":["a1","a2","a3"]}
+        f2.potentials = np.array([0.8,0,0.6])
+        
+        f3 = f1 / f2
+        res = np.array([[0.625, 0.25],[0,0],[0.5,0.75]])
+        np.testing.assert_array_almost_equal(f3.potentials, res)
+
     def test_multiplication_error(self):
         wet = DiscreteNode("wet_grass")
         sprink = DiscreteNode("sprinkler")
