@@ -88,19 +88,21 @@ class FactorTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "The number of evidence strength (3) does not correspont to the number of values (2)")
                 
                 
+    def test_invert(self):
+        f1 = Factor.from_node(self.n1)
+        f2 = f1.invert()
+        np.testing.assert_array_almost_equal(f2.potentials, np.array([10.0/3,10.0/7]))
+    
     def test_division_with_trivial_factor(self):
-        
         f1 = Factor.get_trivial()
         f2 = Factor.from_node(self.n1)
         f3 = f2 / f1
-        f3 = f2 * f1.invert()
         np.testing.assert_array_almost_equal(f3.potentials, self.n1.cpd) 
         
     def test_division_with_same_vars(self):
         f1 = Factor.from_node(self.n2)
         f2 = Factor.from_node(self.n2)
-        #f3 = f1 / f2
-        f3 = f1 * f2.invert()
+        f3 = f1 / f2
         np.testing.assert_array_almost_equal(f3.potentials, np.ones(self.n2.cpd.shape))  
         
     def test_division_with_zeros(self):
@@ -111,8 +113,7 @@ class FactorTest(unittest.TestCase):
         n2cpt[:,:] = 1
         n2cpt[0,0] = 0
         f2 = Factor.from_node(self.n2)
-#        f3 = f1 / f2
-        f3 = f1 * f2.invert()
+        f3 = f1 / f2
         np.testing.assert_array_almost_equal(f3.potentials, n2cpt) 
         
     def test_division_different_vars(self):
