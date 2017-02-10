@@ -40,6 +40,20 @@ class Factor(object):
         self.variableOrder = []
 
 
+    def invert(self):
+        res = copy.deepcopy(self)
+        if len(res.variables) == 0:
+            with np.errstate(divide="raise"):
+                try:
+                    res.potentials = 1.0/res.potentials
+                except ZeroDivisionError:
+                    res.potentials = 0
+        else:
+            with np.errstate(divide='ignore', invalid="ignore"):
+                res.potentials = 1.0 / res.potentials
+                res.potentials[res.potentials==np.inf] = 0
+        return res
+
     @classmethod
     def from_samples(cls, samples, variableValues):
         """
@@ -133,10 +147,12 @@ class Factor(object):
         return res
         
     @classmethod
-    def as_evidence(cls, variable, values, evidence):
+    def as_evidence(cls, variable, values, evidence, oldValues=None):
         """
             Creates an "evidence factor" which is used to introduce hart and
-            soft evidence into the inference algorithms.
+            soft evidence into the inference algorithms. In case of soft evidence
+            the required ratio is computed in order to shift the posterior
+            probability of the evidence node to the desired values.
             
             Parameters
             ---------
@@ -146,9 +162,10 @@ class Factor(object):
                 List of possible values/outcomes of that variable
             evidence: String or np.array
                 The actual evidence that was observed. If a string is given,
-                hard evidence is assumed for that given outcome. Otherwise,
-                the evidence is set according to the given array. The probabilities
-                in the array need to be in the same order as given in the values
+                hard evidence is assumed for that given outcome. 
+                Otherwise, the evidence is set according to the given array. 
+                The probabilities in the array need to be in the same order as 
+                given in the values.
                 
             Returns
             -------
@@ -168,10 +185,40 @@ class Factor(object):
         else:
             if len(evidence) != len(values):
                 raise ValueError("The number of evidence strength ({}) does not correspont to the number of values ({})".format(len(evidence),len(values)))
-            res.potentials = np.copy(evidence)
+            #TODO Construct potential according to ratios so that 
+            #we can just multiply it as in the hard evidence case!
+            #See Bayesian Artificial Intelligence p.
+            if None != oldValues:
+                #Interpret given (soft) evidence as desired posterior
+                res.potentials = np.ones(np.shape(evidence))
+                #Select the highest value as maximum so that this will also work
+                #for specifying hard evidence the same way as soft evidence
+                refIndex = np.argmax(evidence)
+                refEvidence = np.max(evidence)
+                for i,v in enumerate(values):
+                    if i == refIndex:
+                        #Just fix the reference Value to 1.
+                        #Since only the ratio between the different evidence values
+                        #influences the posterior, we can choose one value and just
+                        #adjust the others relative to this
+                        res.potentials[i] = 1
+                    else:
+                        #TODO Catch the case that oldValues[i] = 0!! => in that case potential[i] = 0
+                        res.potentials[i] = evidence[i]/oldValues[i] *oldValues[refIndex]/refEvidence 
+            else:
+                #Interpet given (soft) evidence as proportion
+                res.potentials = np.copy(evidence)
+                
+#            res.potentials = odd * oldOdd
         return res
         
+    
     def __truediv__(self, other):
+        if not set(other.variableOrder).issubset(set(self.variableOrder)):
+            raise ValueError("The divisor's variable are not a subset of the divident's variables: Divisor: {}, Dividend: {}".format(other.variableOrder, self.variableOrder))
+        return self * other.invert()
+    
+    def __truediv2__(self, other):
         """
             Allows division of two factors. Currently other can only be a 
             trivial factor or a factor containing the same variables as this
@@ -206,6 +253,8 @@ class Factor(object):
             return f1
         
         if set(f1.variableOrder) != set(f2.variableOrder):
+            print f1.variableOrder
+            print f2.variableOrder
             raise ValueError("The divisor has different variables than the dividend.")
             
         if f1.variableOrder != f2.variableOrder:

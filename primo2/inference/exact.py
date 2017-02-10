@@ -289,9 +289,16 @@ class FactorTree(object):
                 evidence = {"E": "True"} is equivalent to {"E": np.array([1.0,0.0])}
         """
         self.reset_factors()
+        
+        self.calculate_messages()
+        
+        tmp = {}
+        for e in evidence:
+            tmp[e] = self.marginals([e])
+        self.reset_factors()
         # Add evidence to buckets
         for e in evidence.keys():
-            evidenceFactor = Factor.as_evidence(e, self.bn.get_node(e).values, evidence[e])
+            evidenceFactor = Factor.as_evidence(e, self.bn.get_node(e).values, evidence[e], tmp[e].potentials)
             for node, nodeData in self.tree.nodes_iter(data=True):
                 if e in nodeData["variables"]:
                     nodeData["factor"] = nodeData["factor"] * evidenceFactor
