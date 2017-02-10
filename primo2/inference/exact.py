@@ -230,13 +230,20 @@ class FactorTree(object):
         # Construct jointree
         tree = nx.Graph(messagesValid=False)
         if len(clusterSeq) > 0:
-            tree.add_node("".join(clusterSeq[-1]), variables=set(clusterSeq[-1]), factor=Factor.get_trivial())
+            tree.add_node("".join(clusterSeq[-1]), 
+                          variables=set(clusterSeq[-1]), 
+                          factor=Factor.get_trivial())
             for i in range(len(clusterSeq)-2,-1,-1):
-                tree.add_node("".join(clusterSeq[i]), variables=set(clusterSeq[i]), factor=Factor.get_trivial())
-                jointreeProp = set(clusterSeq[i]).intersection(set().union(*clusterSeq[i+1:]))
+                tree.add_node("".join(clusterSeq[i]), 
+                              variables=set(clusterSeq[i]), 
+                              factor=Factor.get_trivial())
+                jointreeProp = set(clusterSeq[i]).intersection(
+                                                set().union(*clusterSeq[i+1:]))
                 for cl in clusterSeq[i+1:]:
                     if jointreeProp.issubset(set(cl)):
-                        tree.add_edge("".join(clusterSeq[i]), "".join(cl), sep=jointreeProp, factor=Factor.get_trivial())
+                        tree.add_edge("".join(clusterSeq[i]), "".join(cl), 
+                                      sep=jointreeProp, 
+                                      factor=Factor.get_trivial())
                         break
                     
         # Assign factors to clusters
@@ -273,7 +280,9 @@ class FactorTree(object):
         self.tree.graph["messagesValid"] = False
         
         
-    def set_evidence(self, evidence):
+    def set_evidence(self, evidence, softPosteriors=False):
+        #TODO make it possible to disinguish between setting soft posterior
+        #and soft ratios as evidence
         """
             Sets the given evidence in the factor tree. This will trigger a 
             recomputation of the messages given this evidence.
@@ -286,19 +295,33 @@ class FactorTree(object):
                 be simple strings of the given values, or a np.array specifying
                 the strength of the evidence for each outcome, e.g.:
                 For the binary evidence node E
-                evidence = {"E": "True"} is equivalent to {"E": np.array([1.0,0.0])}
+                evidence = {"E": "True"} is equivalent to 
+                {"E": np.array([1.0,0.0])}
+            softPosteriors: bool, optional
+                If softPosterior is set to True, the evidence, should it be a
+                np.array, is interpreted as soft evidence for a desired 
+                posterior distribution. For this, the naive marginals for all
+                evidence variables need to be computed first before the
+                likelihood ratio factor can be computed. If softPosterior is
+                not set, any potential soft evidence is considered as likelihood
+                ratio directly.
         """
         self.reset_factors()
+        #Initialice temporary marginals to None
+        tmp = {e: None for e in evidence}
+        if softPosteriors:
+            #Compute the old/naive marignals for the evidence values which are
+            #required to compute the proper likelihood ratio factor below
+            self.calculate_messages()
+            for e in evidence:
+                tmp[e] = self.marginals([e]).potentials
+            self.reset_factors()
         
-        self.calculate_messages()
-        
-        tmp = {}
-        for e in evidence:
-            tmp[e] = self.marginals([e])
-        self.reset_factors()
         # Add evidence to buckets
-        for e in evidence.keys():
-            evidenceFactor = Factor.as_evidence(e, self.bn.get_node(e).values, evidence[e], tmp[e].potentials)
+        for e in evidence:
+            evidenceFactor = Factor.as_evidence(e, 
+                                    self.bn.get_node(e).values, 
+                                    evidence[e], oldMarginals=tmp[e])
             for node, nodeData in self.tree.nodes_iter(data=True):
                 if e in nodeData["variables"]:
                     nodeData["factor"] = nodeData["factor"] * evidenceFactor

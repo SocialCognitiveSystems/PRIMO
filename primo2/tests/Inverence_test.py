@@ -234,7 +234,7 @@ class FactorEliminationTest(unittest.TestCase):
                                 [0.6, 0.6, 0.2]]))
             
         tree = FactorTree.create_jointree(bn)
-        tree.set_evidence({"cloth": np.array([0.7,0.25,0.05])})
+        tree.set_evidence({"cloth": np.array([0.7,0.25,0.05])}, softPosteriors=True)
         
         np.testing.assert_array_almost_equal(tree.marginals(["cloth"]).get_potential(), np.array([0.7,0.25,0.05]))
         np.testing.assert_array_almost_equal(tree.marginals(["sold"]).get_potential(), np.array([0.42,0.58]))
