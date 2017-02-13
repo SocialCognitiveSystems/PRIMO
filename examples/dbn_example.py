@@ -4,7 +4,7 @@ from primo2.inference import exact
 d = dbn.create_DBN_from_spec('dbals.conf')
 #d.set_unroll_method('PRIOR_FEEDBACK')
 
-# ft = exact.FactorTree.create_jointree(d.B0)
+# ft = exact.FactorTree.create_jointree(d.b0)
 # ft.set_evidence({})
 # print('perception', ft.marginals(['perception']).get_potential())
 # print('understanding', ft.marginals(['understanding']).get_potential())

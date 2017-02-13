@@ -41,23 +41,23 @@ class DynamicBayesianNetwork(object):
     acyclic (within a slice)
     '''
 
-    def __init__(self, b0=None, two_tbn=None, transition_model=None, method='SOFT_EVIDENCE'):
+    def __init__(self, b0=None, two_tbn=None, transitions=None, unroll_method='SOFT_EVIDENCE'):
         super(DynamicBayesianNetwork, self).__init__()
         self._t = 0
         self._b0 = network.BayesianNetwork() if b0 is None else b0
         self._twoTBN = network.BayesianNetwork() if two_tbn is None else two_tbn
-        self._transition_model = []
-        if transition_model is not None:
-            self.add_transitions(transition_model)
-        self.set_unroll_method(method)
+        self._transitions = []
+        if transitions is not None:
+            self.add_transitions(transitions)
+        self.set_unroll_method(unroll_method)
 
     @property
-    def B0(self):
+    def b0(self):
         ''' Get the Bayesian network representing the initial distribution.'''
         return self._b0
 
-    @B0.setter
-    def B0(self, value):
+    @b0.setter
+    def b0(self, value):
         ''' Set the Bayesian network representing the initial distribution.'''
         self._b0 = value
 
@@ -69,14 +69,16 @@ class DynamicBayesianNetwork(object):
     def twoTBN(self, value):
         self._twoTBN = value
 
-    def set_unroll_method(self, method):
+    def set_unroll_method(self, name):
         if self._t == 0:
-            if method == 'SOFT_EVIDENCE':
+            if name == 'SOFT_EVIDENCE':
                 self.unroll = self._unroll_soft_evidence
                 self._ft = None
                 self._transition_evidence = {}
-            elif method == 'PRIOR_FEEDBACK':
+            elif name == 'PRIOR_FEEDBACK':
                 self.unroll = self._unroll_prior_feedback
+            else:
+                raise('Unroll method "{}" is unknown'.format(name))
         else:
             raise('Cannot switch unroll method anymore, t > 0.')
 
@@ -94,27 +96,27 @@ class DynamicBayesianNetwork(object):
         '''
         node0 = self._twoTBN.get_node(node)
         node1 = self._twoTBN.get_node(node_t)
-        self._transition_model.append((node0, node1))
+        self._transitions.append((node0, node1))
 
-    def add_transitions(self, transition_model):
-        for transition in transition_model:
+    def add_transitions(self, transitions):
+        for transition in transitions:
             self.add_transition(transition[0], transition[1])
 
     def _unroll_prior_feedback(self, evidence=None):
         state = {}
         if self._t == 0:
             ft = exact.FactorTree.create_jointree(self._b0)
-            transition_nodes = [self._b0.get_node(nt.name) for (_, nt) in self._transition_model]#FIXME
+            transition_nodes = [self._b0.get_node(nt.name) for (_, nt) in self._transitions]#FIXME
         else:
             for node in ['perception_t0', 'understanding_t0', 'acceptance_t0', 'grounding_t0']: # debug
                 print(self._twoTBN.get_node(node).cpd) # debug
             ft = exact.FactorTree.create_jointree(self._twoTBN)
-            transition_nodes = [nt for (_, nt) in self._transition_model]#FIXME
+            transition_nodes = [nt for (_, nt) in self._transitions]#FIXME
         ft.set_evidence({} if evidence is None else evidence)
         for node_t in transition_nodes:
             state[node_t] = ft.marginals([node_t]).get_potential()
             print(node_t, state[node_t]) # debug
-        for (node, node_t) in self._transition_model:
+        for (node, node_t) in self._transitions:
             self._twoTBN.get_node(node).set_cpd(state[node_t])
         self._t += 1
 
@@ -128,7 +130,7 @@ class DynamicBayesianNetwork(object):
             _evidence.update(self._transition_evidence)
         self._ft.set_evidence(_evidence, softPosteriors=True)
         self._transition_evidence.clear()
-        for node, node_t in self._transition_model:
+        for node, node_t in self._transitions:
             self._transition_evidence[node] = self._ft.marginals([node_t]).get_potential()
             if self._t > 0:
                 print(node, self._ft.marginals([node]).get_potential()) # debug
