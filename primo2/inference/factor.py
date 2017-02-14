@@ -40,6 +40,14 @@ class Factor(object):
         self.variableOrder = []
 
 
+    def __deepcopy__(self, memodict={}):
+        copy_object = Factor()
+        copy_object.potentials = np.copy(self.potentials)
+        copy_object.variables = dict(self.variables)
+        copy_object.values = dict(self.values)
+        copy_object.variableOrder = list(self.variableOrder)
+        return copy_object
+
     def invert(self):
         res = copy.deepcopy(self)
         if len(res.variables) == 0:
