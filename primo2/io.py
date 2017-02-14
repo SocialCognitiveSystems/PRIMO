@@ -19,17 +19,19 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+import json
+
 import lxml.etree as et
 import numpy as np
 
-from primo2.network import BayesianNetwork
-from primo2.nodes import DiscreteNode
+from . import network
+from . import nodes
 
 class XMLBIFParser(object):
         
     @staticmethod
     def parse(filename):
-        bn = BayesianNetwork()
+        bn = network.BayesianNetwork()
 
         tree = et.parse(filename)
         root = tree.getroot()
@@ -38,7 +40,7 @@ class XMLBIFParser(object):
         for var in root.iter("VARIABLE"):
             curName = var.find("./NAME").text
             values = [outcome.text for outcome in var.findall("./OUTCOME")]
-            curNode = DiscreteNode(curName, values) 
+            curNode = nodes.DiscreteNode(curName, values) 
             
             bn.add_node(curNode)
             
@@ -91,8 +93,35 @@ class XMLBIFParser(object):
             table = et.SubElement(defi, "TABLE")
             table.text = " ".join(str(e) for e in np.reshape(node.cpd, (np.size(node.cpd)), "F"))
 
-        f = open(filename, "wb")
-        f.write(et.tostring(root, pretty_print=True))
-        f.close()
-        
-        
+        with open(filename, "wb") as f:
+            f.write(et.tostring(root, pretty_print=True))
+
+
+class DBNSpec(object):
+
+    @staticmethod
+    def parse(filename):
+        '''
+        Keyword arguments:
+        dbn_spec -- is a filepath to a JSON specification of a dynamic Bayesian network
+    
+        Example:
+        > {
+        >     "B0": "b0_network.xbif",
+        >     "TBN": "tbn_network.xbif",
+        >     "transitions": [
+        >         ["node_a_t0", "node_a_t"],
+        >         ["node_b_t0", "node_b_t"]
+        >     ]
+        > }
+    
+        Returns an instantiated dynamic Bayesian network.
+        '''
+        with open(filename) as json_data:
+            spec = json.load(json_data)
+        b0 = XMLBIFParser.parse(spec['B0'])
+        two_tbn = XMLBIFParser.parse(spec['TBN'])
+        dbn = network.DynamicBayesianNetwork(b0, two_tbn)
+        for transition in spec['transitions']:
+            dbn.add_transition(transition[0], transition[1])
+        return dbn

@@ -21,7 +21,7 @@
 
 import networkx as nx
 
-import primo2.nodes
+from . import nodes
 
 class BayesianNetwork(object):
 
@@ -32,7 +32,7 @@ class BayesianNetwork(object):
         self.name = "" #Only used to be compatible with XMLBIF
 
     def add_node(self, node):
-        if isinstance(node, primo2.nodes.RandomNode):
+        if isinstance(node, nodes.RandomNode):
             if node.name in self.node_lookup:
                 raise ValueError("The network already contains a node called Node1")
             self.node_lookup[node.name]=node
@@ -126,4 +126,64 @@ class BayesianNetwork(object):
         '''Return the number of nodes in the graph.'''
         return len(self.graph)
         
-         
+
+class DynamicBayesianNetwork(object):
+    '''
+    TODO: Update docstring
+    This is the implementation of a dynamic Bayesian network (also called
+    temporal Bayesian network).
+
+    Definition: DBN is a pair (B0, TwoTBN), where B0 is a BN over X(0),
+    representing the initial distribution over states, and TwoTBN is a
+    2-TBN for the process.
+    See Koller, Friedman - "Probabilistic Graphical Models" (p. 204)
+
+    Properties: Markov property, stationary, directed, discrete,
+    acyclic (within a slice)
+    '''
+
+    def __init__(self, b0=None, two_tbn=None, transitions=None):
+        super(DynamicBayesianNetwork, self).__init__()
+        self._b0 = BayesianNetwork() if b0 is None else b0
+        self._two_tbn = BayesianNetwork() if two_tbn is None else two_tbn
+        self._transitions = []
+        if transitions is not None:
+            self.add_transitions(transitions)
+        
+    @property
+    def b0(self):
+        ''' Get the Bayesian network representing the initial distribution.'''
+        return self._b0
+
+    @b0.setter
+    def b0(self, value):
+        ''' Set the Bayesian network representing the initial distribution.'''
+        self._b0 = value
+
+    @property
+    def two_tbn(self):
+        return self._two_tbn
+
+    @two_tbn.setter
+    def two_tbn(self, value):
+        self._two_tbn = value
+
+    def add_transition(self, node, node_t):
+        '''
+        Mark a node as interface node.
+
+        Keyword arguments:
+        node_name -- Name of the interface node.
+        node_name_t -- Name of the corresponding node in the time slice.
+        '''
+        node0 = self._two_tbn.get_node(node)
+        node1 = self._two_tbn.get_node(node_t)
+        self._transitions.append((node0, node1))
+
+    def add_transitions(self, transitions):
+        for transition in transitions:
+            self.add_transition(transition[0], transition[1])
+
+    @property
+    def transitions(self):
+        return self._transitions
