@@ -24,14 +24,14 @@ import json
 import lxml.etree as et
 import numpy as np
 
-from . import network
+from . import networks
 from . import nodes
 
 class XMLBIFParser(object):
         
     @staticmethod
     def parse(filename):
-        bn = network.BayesianNetwork()
+        bn = networks.BayesianNetwork()
 
         tree = et.parse(filename)
         root = tree.getroot()
@@ -121,7 +121,7 @@ class DBNSpec(object):
             spec = json.load(json_data)
         b0 = XMLBIFParser.parse(spec['B0'])
         two_tbn = XMLBIFParser.parse(spec['TBN'])
-        dbn = network.DynamicBayesianNetwork(b0, two_tbn)
+        dbn = networks.DynamicBayesianNetwork(b0, two_tbn)
         for transition in spec['transitions']:
             dbn.add_transition(transition[0], transition[1])
         return dbn

@@ -20,7 +20,7 @@
 # <http://www.gnu.org/licenses/>.
 
 import unittest
-from primo2.network import BayesianNetwork
+from primo2.networks import BayesianNetwork
 from primo2.nodes import RandomNode
 
 class BayesNetTest(unittest.TestCase):
