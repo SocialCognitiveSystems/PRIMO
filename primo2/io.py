@@ -101,22 +101,34 @@ class DBNSpec(object):
 
     @staticmethod
     def parse(filename):
-        '''
-        Keyword arguments:
-        dbn_spec -- is a filepath to a JSON specification of a dynamic Bayesian network
+        """
+        Load the structure of a dynamic Bayesian network from a specification.
     
+        The specification is a file in JSON-format that references the B_0 and
+        B_{->} Bayesian network files in XBIF-format (via their path) and
+        contains a list of the transitions connecting nodes when unrolling the
+        network.
+
         Example:
         > {
         >     "B0": "b0_network.xbif",
         >     "TBN": "tbn_network.xbif",
         >     "transitions": [
-        >         ["node_a_t0", "node_a_t"],
-        >         ["node_b_t0", "node_b_t"]
+        >         ["node_a", "node_a_p"],
+        >         ["node_b", "node_b_p"]
         >     ]
         > }
+
+        Parameters
+        ----------
+        filename : String
+            The path of the DBN specification file.
     
-        Returns an instantiated dynamic Bayesian network.
-        '''
+        Returns
+        -------
+        DynamicBayesianNetwork
+            The dynamic Bayesian network structure.
+        """
         with open(filename) as json_data:
             spec = json.load(json_data)
         b0 = XMLBIFParser.parse(spec['B0'])

@@ -21,6 +21,7 @@
 
 import networkx as nx
 
+from . import exceptions
 from . import nodes
 
 class BayesianNetwork(object):
@@ -128,21 +129,27 @@ class BayesianNetwork(object):
         
 
 class DynamicBayesianNetwork(object):
-    '''
-    TODO: Update docstring
-    This is the implementation of a dynamic Bayesian network (also called
-    temporal Bayesian network).
+    """Class representing a the structure of a dynamic Bayesian network.
 
-    Definition: DBN is a pair (B0, TwoTBN), where B0 is a BN over X(0),
-    representing the initial distribution over states, and TwoTBN is a
-    2-TBN for the process.
-    See Koller, Friedman - "Probabilistic Graphical Models" (p. 204)
-
-    Properties: Markov property, stationary, directed, discrete,
-    acyclic (within a slice)
-    '''
+    This temporal relationship is modelled as a 2-time-slice Bayesian 
+    network (2-TBN; Koller & Friedman, 2009, §6.2.2). The Bayesian network
+    B_0 represents the initial distribution. The Bayesian network B_{->},
+    a 2-TBN, represents the process.
+    """
 
     def __init__(self, b0=None, two_tbn=None, transitions=None):
+        """Create a dynamic Bayesian network.
+
+        Parameters
+        ----------
+        b0 : BayesianNetwork
+            The network representing the initial distribution.
+        two_tbn : BayesianNetwork
+            The two-time-slice network representing the process.
+        transitions : [(node, node_p),]
+            A list of pairs, each of which represents one transition. 
+            See add_transition for more information.
+        """
         super(DynamicBayesianNetwork, self).__init__()
         self._b0 = BayesianNetwork() if b0 is None else b0
         self._two_tbn = BayesianNetwork() if two_tbn is None else two_tbn
@@ -152,38 +159,102 @@ class DynamicBayesianNetwork(object):
         
     @property
     def b0(self):
-        ''' Get the Bayesian network representing the initial distribution.'''
+        """Get the Bayesian network B_0.
+        
+        Returns
+        -------
+        BayesianNetwork
+            The network representing the initial distribution.
+        """
         return self._b0
 
     @b0.setter
-    def b0(self, value):
-        ''' Set the Bayesian network representing the initial distribution.'''
-        self._b0 = value
+    def b0(self, bn):
+        """Set the Bayesian network B_0.
+
+        Parameters
+        ----------
+        bn : BayesianNetwork
+            The network representing the initial distribution.
+        """
+        self._b0 = bn
 
     @property
     def two_tbn(self):
+        """Get the 2-TBN B_{->}.
+
+        Returns
+        -------
+            BayesianNetwork
+            The two-time-slice network representing the process.
+        """
         return self._two_tbn
 
     @two_tbn.setter
-    def two_tbn(self, value):
-        self._two_tbn = value
+    def two_tbn(self, bn):
+        """Set the 2-TBN B_{->}.
 
-    def add_transition(self, node, node_t):
-        '''
-        Mark a node as interface node.
+        Parameters
+        ----------
+        bn : BayesianNetwork
+            The two-time-slice network representing the process.
+        """
+        self._two_tbn = bn
 
-        Keyword arguments:
-        node_name -- Name of the interface node.
-        node_name_t -- Name of the corresponding node in the time slice.
-        '''
-        node0 = self._two_tbn.get_node(node)
-        node1 = self._two_tbn.get_node(node_t)
-        self._transitions.append((node0, node1))
+    def add_transition(self, node, node_p):
+        """Add a transition connecting nodes when unrolling the network.
+
+        The transition is a directed edge from node X_i (`node`) to node X_i'
+        (`node_p`).
+
+        Parameters
+        ----------
+        node : RandomNode, String
+            The node X_i in the next time-slice.
+            
+        node_p: RandomNode, String
+            The corresponding node X_i' in the current time-slice.
+
+        Raises
+        ------
+        primo2.exceptions.StructureError
+            If a node specified in the transition model cannot be found in the
+            corresponding networks.
+        """
+        if node_p not in self._b0.get_all_nodes():
+            raise exceptions.StructureError(
+                'Node "{}" is not found in B_0 network "{}".'.format(
+                    node_p, self._b0.name))
+        if node_p not in self._two_tbn.get_all_nodes():
+            raise exceptions.StructureError(
+                'Node "{}" is not found in B_{->} network "{}".'.format(
+                    node_p, self._two_tbn.name))
+        if node not in self._two_tbn.get_all_nodes():
+            raise exceptions.StructureError(
+                'Node "{}" is not found in B_{{->}} network "{}".'.format(
+                    node, self._two_tbn.name))
+        self._transitions.append((node, node_p))
 
     def add_transitions(self, transitions):
+        """Add multiple transitions connecting nodes when unrolling the network.
+
+        Parameters
+        ----------
+        transitions : [(node, node_p),]
+            A list of pairs, each of which represents one transition. 
+            See add_transition for more information.
+        """        
         for transition in transitions:
             self.add_transition(transition[0], transition[1])
 
     @property
     def transitions(self):
+        """Get the transition model.
+
+        Returns
+        -------
+        [(node, node_p),]
+            A list of pairs, each of which represents one transition. 
+            See add_transition for more information.
+        """
         return self._transitions
