@@ -19,9 +19,11 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
+
 class PrimoError(Exception):
 	"""An unspecified error occuring within PRIMO."""
 	pass
+
 
 class StructureError(PrimoError):
 	"""An error in the structure of a Bayesian network."""

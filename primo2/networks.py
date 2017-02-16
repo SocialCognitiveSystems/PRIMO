@@ -95,7 +95,7 @@ class BayesianNetwork(object):
                 
             Returns
             -------
-                [RandomNode,]
+            [RandomNode,]
                 A list containing all the nodes that have the given node as parent.
         """
         return self.graph.succ[nodeName]
@@ -185,7 +185,7 @@ class DynamicBayesianNetwork(object):
 
         Returns
         -------
-            BayesianNetwork
+        BayesianNetwork
             The two-time-slice network representing the process.
         """
         return self._two_tbn

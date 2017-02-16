@@ -55,7 +55,10 @@ class DBNInferenceMethod(object):
 
     @abc.abstractmethod
     def marginal_probabilities(self, variable):
-        """Get the marginal probabilities of a variable. (abstract)
+        """Get the marginal probabilities of a variable. 
+
+        This is an abstract method that needs to be implemented by subclasses
+        of `DBNInferenceMethod`.
 
         Parameters
         ----------
@@ -72,7 +75,10 @@ class DBNInferenceMethod(object):
 
     @abc.abstractmethod
     def marginals(self, variables):
-        """Get the marginals of a variable. (abstract)
+        """Get the marginals of a variable.
+
+        This is an abstract method that needs to be implemented by subclasses
+        of `DBNInferenceMethod`.
 
         Parameters
         ----------
@@ -101,6 +107,10 @@ class DBNInferenceMethod(object):
             the strength of the evidence for each outcome, e.g.: For the binary
             evidence node E `{"E": "True"}` is equivalent to
             `{"E": np.array([1.0, 0.0])}`.
+        **kwargs
+            Takes the same keyword arguments as `set_evidence` and
+            `_set_evidence`. These are additional argument that derivatives
+            of this class can use.
         """
         r = self._set_evidence(evidence)
         self._evidence = True
@@ -126,7 +136,8 @@ class DBNInferenceMethod(object):
             `{"E": np.array([1.0, 0.0])}`.
         **kwargs
             Takes the same keyword arguments as `set_evidence` and
-            `_set_evidence`.
+            `_set_evidence`. These are additional argument that derivatives
+            of this class can use.
         """
         if not self._evidence or evidence is not None:
             self._set_evidence(evidence, **kwargs)
@@ -136,7 +147,10 @@ class DBNInferenceMethod(object):
 
     @abc.abstractmethod
     def _set_evidence(self, evidence=None, **kwargs):
-        """Set evidence for the network (doing the actual work). (abstract)
+        """Set evidence for the network (doing the actual work).
+
+        This is an abstract method that needs to be implemented by subclasses
+        of `DBNInferenceMethod`.
 
         See `set_evidence`.
         """
@@ -144,7 +158,10 @@ class DBNInferenceMethod(object):
 
     @abc.abstractmethod
     def _unroll(self):
-        """Unroll the network (doing the actual work). (abstract)
+        """Unroll the network (doing the actual work).
+
+        This is an abstract method that needs to be implemented by subclasses
+        of `DBNInferenceMethod`.
 
         See `unroll`.
         """
@@ -202,7 +219,7 @@ class PriorFeedbackExact(DBNInferenceMethod):
         """
         return self._ft.marginals(variables)
 
-    def _set_evidence(self, evidence=None, soft_posteriors=False, **kwargs):
+    def _set_evidence(self, evidence=None, soft_posteriors=False):
         """Set evidence for the network (doing the actual work).
 
         Parameters
@@ -239,7 +256,7 @@ class SoftEvidenceExact(DBNInferenceMethod):
     Inference is exact and based on factor trees. The marginal posterior
     probabilities of the variables of the current time-slice are used as prior
     probabilties for the next time-slice. They are set as soft evidence on the
-    FactorTree.
+    FactorTree (see `factorTree.set_evidence`).
     """
 
     def __init__(self, dbn):
@@ -273,7 +290,7 @@ class SoftEvidenceExact(DBNInferenceMethod):
         """
         return self._ft.marginals(variables)
 
-    def _set_evidence(self, evidence=None, **kwargs):
+    def _set_evidence(self, evidence=None):
         """Set evidence for the network (doing the actual work).
 
         Automatically set `softPosteriors` to `True` as prior feedback is fed
