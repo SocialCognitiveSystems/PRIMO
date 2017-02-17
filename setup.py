@@ -22,16 +22,17 @@
 import setuptools
 import sys
 
+from primo2 import __version__
+
 if sys.argv[-1] == 'setup.py':
     print("To install, run 'python setup.py install'")
     print()
 
-version = 0.91
 
 setuptools.setup(
     name="primo2",
-    version=version,
-    description="(Partial) reimplementation of PRobabilistic Inference MOdules",
+    version=__version__,
+    description="PRIMO -- PRobabilistic Inference MOdules",
     long_description="This project is a (partial) reimplementation of the original " \
         "probabilistic inference modules which can be found at " \
         "https://github.com/hbuschme/PRIMO. This reimplementation " \
@@ -41,8 +42,20 @@ setuptools.setup(
         "algorithms have been rewritten and partly extended. For most if not " \
         "all use cases this implementation should be easier to use and more " \
         "performant than the original.",
-    author="Jan Pöppel",
-    author_email="jpoeppel@techfak.uni-bielefeld.de",
+    url='http://github.com/SocialCognitiveSystems/PRIMO/',
+    license='GNU Lesser General Public License v3 or later (LGPLv3+)',
+    maintainer="Jan Pöppel",
+    maintainer_email="jpoeppel@techfak.uni-bielefeld.de",
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+    ],
     packages=[
             "primo2",
             "primo2.inference"
@@ -52,5 +65,5 @@ setuptools.setup(
             "numpy",
             "networkx",
             "six"
-        ]
+        ],
     )
