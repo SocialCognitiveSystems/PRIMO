@@ -88,8 +88,8 @@ class DBNInferenceMethod(object):
                 
         Returns
         -------
-        ?
-            The marginals.
+        A distribution representation, e.g. a normalized Factor or np.nparray
+            The marginal distribution.
         """
         pass
 
