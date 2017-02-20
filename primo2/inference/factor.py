@@ -349,6 +349,10 @@ class Factor(object):
                 Factor
                 The product of this factor and the other factor.
         """
+        
+        #TODO Try performing the multiplication with views into the
+        #potentials instead of copying both factors
+        
         #Create copies to avoid modification of original factors
         f1 = copy.deepcopy(self)
         f2 = copy.deepcopy(other)
@@ -427,11 +431,13 @@ class Factor(object):
             del res.values[v]
             res.variableOrder.remove(v)
             
-        res.variables = {}
+        
+        res.variables = {v:idx for idx,v in enumerate(res.variableOrder)}
         #Fix variable index dictionary:
-        for idx, v in enumerate(res.variableOrder):
-            res.variables[v] = idx
-            
+#        res.variables = {}
+#        for idx, v in enumerate(res.variableOrder):
+#            res.variables[v] = idx
+#            
         return res
         
     def get_potential(self, variables=None):
