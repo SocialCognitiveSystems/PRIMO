@@ -6,7 +6,7 @@ Created on Tue Feb 14 13:20:29 2017
 @author: jpoeppel
 """
 
-import time
+import timeit
 
 from primo2.io import XMLBIFParser
 
@@ -23,18 +23,14 @@ tree = exact.FactorTree.create_jointree(bn)
 
 
 def factorTreeMarginals():
-    print tree.marginals(["perception"]).potentials
+    tree.marginals(["perception"]).potentials
     
 def bucketEliminationMarginals():
-    print exact.VariableElimination.bucket_marginals(bn, ["perception"]).potentials
+    exact.VariableElimination.bucket_marginals(bn, ["perception"]).potentials
     
     
     
-t0 = time.time()
-factorTreeMarginals()
-print "Factor Tree took: ", time.time()-t0
+print "Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000)
                                      
-t0 = time.time()
-bucketEliminationMarginals()
-print "Bucket took: ", time.time()-t0
+print "Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000)
     
