@@ -323,7 +323,7 @@ class Factor(object):
         return f1           
         
         
-    def __mul__(self, other):
+    def __mul2__(self, other):
         """
             Allows multiplication of two factors. Will not modify the two
             factors in any way but return a new factor instead.
@@ -402,6 +402,72 @@ class Factor(object):
 
         return f1
     
+    def __mul__(self, other):
+        """
+            Experimental multiplication using views instead of creating complex instances.
+            Appears to make no difference for factorTrees but does improve
+            BucketElimination for some weird reason.
+        """
+        
+#        res.variableOrder = list(set(self.variableOrder+other.variableOrder))
+#        res.variables = dict(self.variables)
+        # Shortcuts for trivial factors
+        if len(self.variables) == 0:
+            res = copy.deepcopy(other)
+            res.potentials = self.potentials * res.potentials
+            return res
+            
+        if len(other.variables) == 0:
+            res = copy.deepcopy(self)
+            res.potentials = res.potentials * other.potentials
+            return res
+        
+        res = Factor()
+        res.variableOrder = list(self.variableOrder)
+        res.values = dict(self.values)
+        extra_vars = set(other.variableOrder) - set(self.variableOrder)
+        #Setup res factor based on self, extended by the missing variables from other
+        if extra_vars:
+            slice_ = [slice(None)] * len(self.variableOrder)
+            slice_.extend([np.newaxis] * len(extra_vars))
+            res.potentials = self.potentials[slice_]
+            
+            res.variableOrder.extend(extra_vars)
+            
+            for var in extra_vars:
+                res.values[var] = other.values[var]
+                
+        else:
+            res.potentials = self.potentials[:]
+            
+        #modify other
+        f2 = copy.deepcopy(other)
+        extra_vars = set(res.variableOrder) - set(f2.variableOrder)
+        if extra_vars:
+            slice_ = [slice(None)] * len(f2.variableOrder)
+            slice_.extend([np.newaxis] * len(extra_vars))
+            f2.potentials = f2.potentials[slice_]
+            f2.variableOrder.extend(extra_vars)
+            
+        
+        #TODO consider using np.transpose here to get the desired order!
+#        for axis in range(res.potentials.ndim):
+#            exchange_index = f2.variableOrder.index(res.variableOrder[axis])
+#            f2.variableOrder[axis], f2.variableOrder[exchange_index] = f2.variableOrder[exchange_index], f2.variableOrder[axis]
+#            f2.potentials = f2.potentials.swapaxes(axis, exchange_index)
+            
+        #Using transpose instead of manually swapping axis does not seem to
+        #have any measurable effect
+        swaparray = [f2.variableOrder.index(var) for var in res.variableOrder]
+        f2.potentials = np.transpose(f2.potentials, swaparray)
+            
+        res.potentials = res.potentials * f2.potentials
+        
+        #Fix variable index dictionary:
+        res.variables = {}
+        for idx, v in enumerate(res.variableOrder):
+            res.variables[v] = idx
+        return res
     
     def marginalize(self, variables):
         """
@@ -431,13 +497,11 @@ class Factor(object):
             del res.values[v]
             res.variableOrder.remove(v)
             
-        
-        res.variables = {v:idx for idx,v in enumerate(res.variableOrder)}
         #Fix variable index dictionary:
-#        res.variables = {}
-#        for idx, v in enumerate(res.variableOrder):
-#            res.variables[v] = idx
-#            
+        res.variables = {}
+        for idx, v in enumerate(res.variableOrder):
+            res.variables[v] = idx
+            
         return res
         
     def get_potential(self, variables=None):
