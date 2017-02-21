@@ -19,8 +19,10 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-import numpy as np
 import random
+
+import numpy as np
+
 
 class RandomNode(object):
     """
@@ -65,10 +67,9 @@ class RandomNode(object):
         
     def __str__(self):
         return self.name
-#        
+   
     def __repr__(self):
-        return self.name
-        
+        return self.name       
 
 
 class DiscreteNode(RandomNode):
@@ -199,7 +200,6 @@ class DiscreteNode(RandomNode):
                 
         self.cpd[tuple(index)] = prob
         
-        
     def get_probability(self, value, parentValues=None):
         """
             Function to return the probability(ies) for a given value of this
@@ -227,7 +227,6 @@ class DiscreteNode(RandomNode):
             np.array
                 A copy of the specified portion of the cpt (might be only one value).
         """
-
         try:
             index = [[self.values.index(value)]]
         except ValueError:
@@ -326,7 +325,6 @@ class DiscreteNode(RandomNode):
                 float
                 The probability of the given outcome given this node's markov blanket.
         """
-        
         prob = self._get_single_probability(outcome, state)
         if not forward:
             for child in children:

@@ -23,8 +23,8 @@ from __future__ import division
 
 import networkx as nx
 
-from primo2.inference.factor import Factor
-from primo2.inference.order import Orderer
+from .factor import Factor
+from .order import Orderer
 
 class VariableElimination(object):
     
