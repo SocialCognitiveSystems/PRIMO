@@ -166,7 +166,7 @@ class DiscreteNode(RandomNode):
             Furthermore, if used underspecified, all corresponding entries in the
             cpt will be set to the given value: E.g. consider the binary variable
             A with binary parent B. Using A.set_probability("True", 0.4) will
-            adapt the cpt to  reflect 0.4 for P(A=True|B=True) AND P(A=True|B=False)
+            adapt the cpt to reflect 0.4 for P(A=True|B=True) AND P(A=True|B=False)
             
             Parameters
             ----------
