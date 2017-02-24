@@ -6,7 +6,7 @@ pfb = dynamic.PriorFeedbackExact(dbn)
 
 for x in range(15):
 	if x % 3 == 0:
-		pfb.unroll({'fb_function': 'understanding'}, soft_postieriors=True)
+		pfb.unroll({'fb_function': 'understanding'}, soft_posteriors=True)
 		print(x, '!', pfb.marginal_probabilities('understanding'))
 	else:
 		pfb.unroll()
