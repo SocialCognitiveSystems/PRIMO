@@ -20,9 +20,12 @@
 # <http://www.gnu.org/licenses/>.
 
 from __future__ import division
-import numpy as np
+
 import copy
-from primo2.nodes import DiscreteNode
+
+import numpy as np
+
+from ..nodes import DiscreteNode
 
 class Factor(object):
     """

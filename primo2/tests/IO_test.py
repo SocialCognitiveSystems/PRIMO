@@ -23,7 +23,7 @@
 import unittest
 import numpy as np
 
-from primo2.network import BayesianNetwork
+from primo2.networks import BayesianNetwork
 from primo2.io import XMLBIFParser
 from primo2.nodes import DiscreteNode
 

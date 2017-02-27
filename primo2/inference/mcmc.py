@@ -20,7 +20,8 @@
 # <http://www.gnu.org/licenses/>.
 
 import random
-from primo2.inference.factor import Factor
+
+from .factor import Factor
 
 class MCMC(object):
     

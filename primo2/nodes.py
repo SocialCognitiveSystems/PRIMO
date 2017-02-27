@@ -19,8 +19,10 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-import numpy as np
 import random
+
+import numpy as np
+
 
 class RandomNode(object):
     """
@@ -44,9 +46,6 @@ class RandomNode(object):
             In order for the access in dictionaries via the name to work, a
             random node is equal to its name as well.
         """
-#        if isinstance(other, str):
-#            return other == self.name
-#        return other.name == self.name
         try:
             return other.name == self.name
         except AttributeError:
@@ -67,8 +66,7 @@ class RandomNode(object):
         return self.name
 
     def __repr__(self):
-        return self.name
-        
+        return self.name       
 
 class DiscreteNode(RandomNode):
     
@@ -164,7 +162,7 @@ class DiscreteNode(RandomNode):
             Furthermore, if used underspecified, all corresponding entries in the
             cpt will be set to the given value: E.g. consider the binary variable
             A with binary parent B. Using A.set_probability("True", 0.4) will
-            adapt the cpt to  reflect 0.4 for P(A=True|B=True) AND P(A=True|B=False)
+            adapt the cpt to reflect 0.4 for P(A=True|B=True) AND P(A=True|B=False)
             
             Parameters
             ----------
@@ -198,7 +196,6 @@ class DiscreteNode(RandomNode):
                 
         self.cpd[tuple(index)] = prob
         
-        
     def get_probability(self, value, parentValues=None):
         """
             Function to return the probability(ies) for a given value of this
@@ -226,7 +223,6 @@ class DiscreteNode(RandomNode):
             np.array
                 A copy of the specified portion of the cpt (might be only one value).
         """
-
         try:
             index = [[self.values.index(value)]]
         except ValueError:
@@ -325,7 +321,6 @@ class DiscreteNode(RandomNode):
                 float
                 The probability of the given outcome given this node's markov blanket.
         """
-        
         prob = self._get_single_probability(outcome, state)
         if not forward:
             for child in children:

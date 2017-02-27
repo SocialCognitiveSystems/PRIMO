@@ -19,10 +19,9 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-import copy
-import networkx as nx
 from operator import itemgetter
-from primo2.network import BayesianNetwork
+
+from ..networks import BayesianNetwork
 
 class Orderer(object):
     """
