@@ -23,6 +23,7 @@ tree = exact.FactorTree.create_jointree(bn)
 
 
 def factorTreeMarginals():
+    tree = exact.FactorTree.create_jointree(bn)
     tree.marginals(["perception"]).potentials
     
 def bucketEliminationMarginals():
@@ -31,6 +32,10 @@ def bucketEliminationMarginals():
     
     
 print "Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000)
-                                     
+print "Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000)
+print "Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000)
+#                                                                                                               
+print "Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000)
+print "Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000)
 print "Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000)
     
