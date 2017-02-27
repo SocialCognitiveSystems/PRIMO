@@ -135,8 +135,8 @@ class VariableElimination(object):
         #Place factors in the first buckets they correlate to
         for f in factors:
             for i in range(len(order)):
-                if order[i] in f.variables:
-                    buckets[i] = buckets[i] * f
+                if order[i] in f:
+                    buckets[i] = buckets[i] *f
                     break                                        
 
         # Add evidence to buckets
@@ -149,7 +149,7 @@ class VariableElimination(object):
         for i in range(bucketUntil):
             tmpFactor = buckets[i].marginalize(order[i])
             for j in range(i+1, len(order)):
-                if order[j] in tmpFactor.variables:
+                if order[j] in tmpFactor:
                     buckets[j] = buckets[j] * tmpFactor
                     break
             else:
@@ -249,7 +249,7 @@ class FactorTree(object):
         # Assign factors to clusters
         for f in factors:
             for treeNode, treeData in tree.nodes_iter(data=True):
-                if set(f.variables).issubset(treeData["variables"]):
+                if set(f.values).issubset(treeData["variables"]):
                     treeData["factor"] = treeData["factor"] * f
                     break
         return cls(tree,bn)
@@ -274,7 +274,7 @@ class FactorTree(object):
             
         for f in factors:
             for treeNode, treeData in self.tree.nodes_iter(data=True):
-                if set(f.variables).issubset(treeData["variables"]):
+                if set(f.values).issubset(treeData["variables"]):
                     treeData["factor"] = treeData["factor"] * f
                     break
         self.tree.graph["messagesValid"] = False

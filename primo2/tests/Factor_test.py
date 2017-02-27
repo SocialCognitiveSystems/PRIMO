@@ -49,16 +49,16 @@ class FactorTest(unittest.TestCase):
     def test_create_from_discrete_node(self):
         f = Factor.from_node(self.n1)
         np.testing.assert_array_equal(f.potentials, self.n1.cpd)
-        self.assertTrue(self.n1.name in f.variables)
+        self.assertTrue(self.n1.name in f)
         for v in self.n1.values:
             self.assertTrue(v in f.values[self.n1]) #TODO find more abstract way to check values?
         
     def test_create_from_discrete_node_with_parents(self):
         f = Factor.from_node(self.n2)
         np.testing.assert_array_equal(f.potentials, self.n2.cpd)
-        self.assertTrue(self.n2.name in f.variables)
+        self.assertTrue(self.n2.name in f)
         for p in self.n2.parentOrder:
-            self.assertTrue(p in f.variables)
+            self.assertTrue(p in f)
             for v in self.n2.parents[p].values:
                 self.assertTrue(v in f.values[p])
                 
@@ -158,9 +158,9 @@ class FactorTest(unittest.TestCase):
 #        np.testing.assert_array_equal(f4.potentials, res)
 #        np.testing.assert_array_equal(np.shape(f4.potentials), np.shape(f2.potentials))
         #Check that variables and values were correctly updated
-        self.assertTrue(self.n1 in f3.variables)
+        self.assertTrue(self.n1 in f3)
 #        self.assertTrue(self.n1 in f4.variables)
-        self.assertTrue(self.n2 in f3.variables)
+        self.assertTrue(self.n2 in f3)
 #        self.assertTrue(self.n2 in f4.variables)
         for v in self.n1.values:
             self.assertTrue(v in f3.values[self.n1])
@@ -172,14 +172,14 @@ class FactorTest(unittest.TestCase):
             
     def test_division_partial_divisor(self):
         f1 = Factor()
-        f1.variables["a"] = 0
-        f1.variables["b"] = 1
+#        f1.variables["a"] = 0
+#        f1.variables["b"] = 1
         f1.variableOrder = ["a","b"]
         f1.values = {"a":["a1","a2","a3"], "b":["b1","b2"]}
         f1.potentials = np.array([[0.5,0.2],[0,0],[0.3,0.45]])
         
         f2 = Factor()
-        f2.variables["a"] = 0
+#        f2.variables["a"] = 0
         f2.variableOrder = ["a"]
         f2.values = {"a":["a1","a2","a3"]}
         f2.potentials = np.array([0.8,0,0.6])
@@ -230,8 +230,8 @@ class FactorTest(unittest.TestCase):
         fRes = f2 * f3
         res = np.array([[[0.16, 0.04], [0.32, 0.08]], [[0.32, 0.08], [0.08, 0.02]], [[0.32, 0.08], [0.4, 0.1]]])
         np.testing.assert_array_almost_equal(fRes.potentials, res)
-        self.assertTrue(self.n2 in fRes.variables)
-        self.assertTrue(self.n3 in fRes.variables)
+        self.assertTrue(self.n2 in fRes.variableOrder)
+        self.assertTrue(self.n3 in fRes.variableOrder)
         for v in self.n2.values:
             self.assertTrue(v in fRes.values[self.n2])
         for v in self.n3.values:
@@ -248,7 +248,7 @@ class FactorTest(unittest.TestCase):
         fRes = f3.marginalize(self.n1.name)
         res = np.array([0.34, 0.19, 0.47])
         np.testing.assert_array_almost_equal(fRes.potentials, res)
-        self.assertFalse(self.n1.name in fRes.variables)
+        self.assertFalse(self.n1.name in fRes)
         self.assertFalse(self.n1.name in fRes.values)
 
             
@@ -272,7 +272,7 @@ class FactorTest(unittest.TestCase):
         fRes = f3.marginalize(self.n1) # This time the node itself is used
         res = np.array([0.34, 0.19, 0.47])
         np.testing.assert_array_almost_equal(fRes.potentials, res)
-        self.assertFalse(self.n1 in fRes.variables)
+        self.assertFalse(self.n1 in fRes)
         self.assertFalse(self.n1 in fRes.values)
         
 #    def test_division(self):
