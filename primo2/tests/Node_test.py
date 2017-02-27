@@ -31,7 +31,7 @@ class RandomNodeTest(unittest.TestCase):
         n = nodes.RandomNode("test")
         with self.assertRaises(NotImplementedError) as cm:
             n.set_cpd(None)
-        self.assertEqual(str(cm.exception), "Called unimplemented Method")
+        self.assertEqual(str(cm.exception), "Called unimplemented method.")
 #        
 #    def test_addParent(self):
 #        self.fail("TODO")
