@@ -287,7 +287,7 @@ class FactorTree(object):
             
             Parameters
             ----------
-            evidence : dict, optional
+            evidence : dict
                 Dictionary containing the given evidence. The keys represent the
                 variable names of the given evidence and the values can either
                 be simple strings of the given values, or a np.array specifying
