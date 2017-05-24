@@ -48,7 +48,7 @@ class BayesNetTest(unittest.TestCase):
         self.assertEqual(len(self.bn), 1)
         with self.assertRaises(ValueError) as cm:
             self.bn.add_node(n3)
-        self.assertEqual(str(cm.exception), "The network already contains a node called {}".format(n1.name))
+        self.assertEqual(str(cm.exception), "The network already contains a node called '{}'.".format(n1.name))
         self.assertEqual(len(self.bn), 1)
         self.bn.add_node(n2)
         self.assertEqual(len(self.bn), 2)

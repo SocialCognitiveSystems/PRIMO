@@ -36,7 +36,7 @@ class RandomNode(object):
         self.cpd = 1
         
     def set_cpd(self, cpd):
-        raise NotImplementedError("Called unimplemented Method")
+        raise NotImplementedError("Called unimplemented method.")
         
         
     def __eq__(self, other):
@@ -46,9 +46,6 @@ class RandomNode(object):
             In order for the access in dictionaries via the name to work, a
             random node is equal to its name as well.
         """
-#        if isinstance(other, str):
-#            return other == self.name
-#        return other.name == self.name
         try:
             return other.name == self.name
         except AttributeError:
@@ -67,10 +64,9 @@ class RandomNode(object):
         
     def __str__(self):
         return self.name
-   
+
     def __repr__(self):
         return self.name       
-
 
 class DiscreteNode(RandomNode):
     

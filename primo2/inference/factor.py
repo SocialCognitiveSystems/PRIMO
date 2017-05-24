@@ -21,8 +21,6 @@
 
 from __future__ import division
 
-import copy
-
 import numpy as np
 
 from ..nodes import DiscreteNode
@@ -34,18 +32,170 @@ class Factor(object):
         (marginalised) of factors.
     """
     def __init__(self):
+        #Store the actual potentials as numpy array
         self.potentials = np.array([])
-         # Use a dictionary that stores the variable names as
-        # keys and their corresponding dimensions as values
-        self.variables = {}
-        # Use a dictionary for the value lists with the variables as keys.
-        self.values = {}
+        #Store all contained variables in a list. The index of each variable
+        #corresponds to the dimension of that variable in the array.
         self.variableOrder = []
+        # Use a dictionary for the values (as tuple) with the variables as keys.
+        self.values = {}
+        
 
+    
+    def __contains__(self, variable):
+        """
+            Overwrite contains method to allow easy checks for contained 
+            variables.
+            
+            Parameters
+            ----------
+            variable: RandomNode, String
+                The variable that is queried to be contained within this factor.
+            
+            Returns
+            -------
+                Boolean
+                True if the variable is contained within this factor, otherwise
+                False.
+        """
+        return variable in self.values
+    
+    
+    def __truediv__(self, other):
+        """
+            Allows division of two factors by inverting the divisor and 
+            multiplying it to the dividend. The divisor's variables must be a 
+            subset of the dividend's variables for this to work since the 
+            expected behaviour is not specified otherwise.
+            
+            Parameter
+            --------
+            other : Factor
+                The factor that this factor is divided with.
+                
+            Returns
+            -------
+                Factor
+                A new factor representing the quotient of the division.
+        """
+        if not set(other.values).issubset(set(self.values)):
+            raise ValueError("The divisor's variable are not a subset of the " \
+                             "divident's variables: Divisor: {}, Dividend: {}"
+                            .format(other.variableOrder, self.variableOrder))
+        return self.__mul__(other.invert(),useOther=False)        
+    
+    def __mul__(self, other, useOther=False):
+        """
+            Allows multiplication of two factors. Will not modify the two
+            factors in any way but return a new factor instead.
+            
+            Currently this is NOT commutative!!
+            This means that the self-factor is used as base to create the resulting
+            factor and any new variables in the other factor are added afterwards!
+            They will however be added in the same order as they have been in
+            the other factor.
+            
+            Also value order is currently NOT checked between the two factors,
+            i.e. if one factor orders the values of some variable as "True", 
+            "False" and another sorts them "False", "True" 
+            the results will be wrong!
+            
+            Paramter
+            -------
+            other : Factor
+                The factor that is multiplied to this factor
+                
+            Returns
+            -------
+                Factor
+                The product of this factor and the other factor.
+        """
+        
+        # Shortcuts for trivial factors
+        if len(self.variableOrder) == 0:
+            res = other if useOther else other.copy()
+            res.potentials = self.potentials * res.potentials
+            return res
+            
+        if len(other.variableOrder) == 0:
+            res = self.copy()
+            res.potentials = res.potentials * other.potentials
+            return res
+        
+        res = Factor()
+        res.variableOrder = list(self.variableOrder)
+        res.values = dict(self.values)
+        extra_vars = set(other.variableOrder) - set(self.variableOrder)
+        #Setup res factor based on self, extended by the missing variables from other
+        if extra_vars:
+            #Create new dimensions for each missing variable
+            slice_ = [slice(None)] * len(self.variableOrder)
+            slice_.extend([np.newaxis] * len(extra_vars))
+            res.potentials = self.potentials[slice_]
+            
+            res.variableOrder.extend(extra_vars)
+            
+            for var in extra_vars:
+                res.values[var] = tuple(other.values[var])
+                
+        else:
+            #This view is ok, since we will overwrite res.potentials below 
+            #when we compute the actual multiplication!
+            res.potentials = self.potentials[:]
+            
+        #modify other
+        f2 = other if useOther else other.copy()
+        extra_vars = set(res.variableOrder) - set(f2.variableOrder)
+        if extra_vars:
+            slice_ = [slice(None)] * len(f2.variableOrder)
+            slice_.extend([np.newaxis] * len(extra_vars))
+            f2.potentials = f2.potentials[slice_]
+            f2.variableOrder.extend(extra_vars)
+            
+        #Rearrange f2 potentials so that dimensions align to the order in res
+        swaparray = [f2.variableOrder.index(var) for var in res.variableOrder]
+        f2.potentials = np.transpose(f2.potentials, swaparray)
+        
+        # Pointwise multiplication which results in a factor where all instantiations
+        # are compatible to the instantiations of res and factor2
+        # See Definition 6.3 in "Modeling and Reasoning with Bayesian Networks" - Adnan Darwiche Chapter 6    
+        res.potentials = res.potentials * f2.potentials
+        
+        return res
+    
+    def copy(self):
+        """
+            Creates a (deep) copy of this factor.
+            
+            Returns
+            -------
+                Factor
+                An exact copy of self.
+        """
+        res = Factor()
+        res.potentials = np.copy(self.potentials)
+#        res.variables = dict(self.variables)
+        #Creating a shallow copy with dict() is enough here as factors
+        #should convert the value lists to tuples upon creation, which makes
+        #modification of these lists impossible.
+        res.values = dict(self.values)
+        res.variableOrder = list(self.variableOrder)
+        return res
 
     def invert(self):
-        res = copy.deepcopy(self)
-        if len(res.variables) == 0:
+        """
+            Creates a copy of this factor with all potentials inverted (i.e.
+            each potential p is replaced by 1/p, while forcing 1/0=0).
+            This is used in order to compute divisions via multiplications
+            with the inverse potentials.
+            
+            Returns
+            -------
+                Factor
+                A factor with inverted potentials.
+        """
+        res = self.copy()
+        if len(res.variableOrder) == 0:
             with np.errstate(divide="raise"):
                 try:
                     res.potentials = 1.0/res.potentials
@@ -87,8 +237,8 @@ class Factor(object):
         shape = []
         for i, v in enumerate(variableValues):
             res.variableOrder.append(v)
-            res.variables[v] = i
-            res.values[v] = variableValues[v]
+#            res.variables[v] = i
+            res.values[v] = tuple(variableValues[v])
             shape.append(len(variableValues[v]))
         res.potentials = np.zeros(shape)
         for s in samples:
@@ -139,14 +289,14 @@ class Factor(object):
         if not isinstance(node, DiscreteNode):
             raise TypeError("Only DiscreteNodes are currently supported.")
         res = cls()
-        res.variables[node.name] = len(res.variables)
+#        res.variables[node.name] = len(res.variables)
         res.variableOrder.append(node.name)
-        res.values[node.name] = copy.copy(node.values)
+        res.values[node.name] = tuple(node.values)
         res.potentials = np.copy(node.cpd)
         for p in node.parentOrder:
-            res.variables[p] = len(res.variables)
+#            res.variables[p] = len(res.variables)
             res.variableOrder.append(p)
-            res.values[p] = copy.copy(node.parents[p].values)
+            res.values[p] = tuple(node.parents[p].values)
         return res
         
     @classmethod
@@ -193,8 +343,7 @@ class Factor(object):
         """
         res = cls()
         res.variableOrder.append(variable)
-        res.variables[variable] = 0
-        res.values[variable] = copy.copy(values)
+        res.values[variable] = tuple(values)
         if not isinstance(evidence, np.ndarray):
             if not evidence in values:
                 raise ValueError("Evidence {} is not one of the possible " \
@@ -238,161 +387,7 @@ class Factor(object):
                 res.potentials = np.copy(evidence)
         return res
         
-    def __truediv__(self, other):
-        """
-            Allows division of two factors by inverting the divisor and 
-            multiplying it to the dividend. The divisor's variables must be a 
-            subset of the dividend's variables for this to work since the 
-            expected behaviour is not specified otherwise.
-            
-            Parameter
-            --------
-            other : Factor
-                The factor that this factor is divided with.
-                
-            Returns
-            -------
-                Factor
-                A new factor representing the quotient of the division.
-        """
-        if not set(other.variableOrder).issubset(set(self.variableOrder)):
-            raise ValueError("The divisor's variable are not a subset of the " \
-                             "divident's variables: Divisor: {}, Dividend: {}"
-                            .format(other.variableOrder, self.variableOrder))
-        return self * other.invert()
-    
-    #TODO consider removing this
-    def __truediv__OLD(self, other):
-        """
-            Allows division of two factors. Currently other can only be a 
-            trivial factor or a factor containing the same variables as this
-            one!
-            
-            Parameter
-            --------
-            other : Factor
-                The factor that this factor is divided with.
-                
-            Returns
-            -------
-                Factor
-                A new factor representing the quotient of the division.
-        """
-        
-        f1 = copy.deepcopy(self)
-        f2 = copy.deepcopy(other)
-        
-        if len(f1.variables) == len(f2.variables) == 0:
-            if f2.potentials != 0:
-                f1.potentials = f1.potentials / f2.potentials
-            else:
-                f1.potentials = 0
-            return f1
-            
-        if len(f2.variables) == 0:
-            with np.errstate(divide='ignore'):
-                f1.potentials = f1.potentials / f2.potentials
-                f1.potentials[f1.potentials==np.inf] = 0
-                f1.potentials[np.isnan(f1.potentials)] = 0 # Required for 0/0
-            return f1
-        
-        if set(f1.variableOrder) != set(f2.variableOrder):
-            print f1.variableOrder
-            print f2.variableOrder
-            raise ValueError("The divisor has different variables than the dividend.")
-            
-        if f1.variableOrder != f2.variableOrder:
-            #Turn f2 variables to match those of f1
-            for v in f1.variableOrder:
-                f2.potentials = np.rollaxis(f2.potentials, f2.variableOrder.index(v), f1.variables[v])
-                # Fix f2 variable order for further variables
-                f2.variableOrder.remove(v)
-                f2.variableOrder.insert(f1.variables[v], v)
-                for idx, v in enumerate(f2.variableOrder):
-                    f2.variables[v] = idx
-                    
-        with np.errstate(divide='ignore', invalid="ignore"):
-            f1.potentials = f1.potentials / f2.potentials
-            f1.potentials[f1.potentials==np.inf] = 0
-            f1.potentials[np.isnan(f1.potentials)] = 0 # Required for 0/0
-        return f1           
-        
-        
-    def __mul__(self, other):
-        """
-            Allows multiplication of two factors. Will not modify the two
-            factors in any way but return a new factor instead.
-            
-            Currently this is NOT commutative!!
-            This means that the self-factor is used as base to create the resulting
-            factor and any new variables in the other factor are added afterwards!
-            They will however be added in the same order as they have been in
-            the other factor.
-            
-            Also value order is currently NOT checked between the two factors,
-            i.e. if one factor orders the values of some variable as "True", 
-            "False" and another sorts them "False", "True" 
-            the results will be wrong!
-            
-            Paramter
-            -------
-            other : Factor
-                The factor that is multiplied to this factor
-                
-            Returns
-            -------
-                Factor
-                The product of this factor and the other factor.
-        """
-        #Create copies to avoid modification of original factors
-        f1 = copy.deepcopy(self)
-        f2 = copy.deepcopy(other)
-        
-        # Shortcuts for trivial factors
-        if len(f1.variables) == 0:
-            f2.potentials = f1.potentials * f2.potentials
-            return f2
-            
-        if len(f2.variables) == 0:
-            f1.potentials = f1.potentials * f2.potentials
-            return f1
-        
-        #Extend factor 1 by all the variables it is missing
-        for v in other.variableOrder:
-            if not v in f1.variables:
-                ax = f1.potentials.ndim
-                f1.variables[v] = ax
-                f1.values[v] = copy.copy(other.values[v])
-                f1.potentials = np.expand_dims(f1.potentials, axis = ax)
-                f1.potentials = np.repeat(f1.potentials, len(other.values[v]), axis = ax)
-                f1.variableOrder.append(v)
-                
-        # Ensure factor2 has the same size as factor1
-        for v in f1.variableOrder:
-            if not v in f2.variables:
-                f2.potentials = np.expand_dims(f2.potentials, f1.variables[v])
-                f2.potentials = np.repeat(f2.potentials, len(f1.values[v]), axis = f1.variables[v])
-                #Fix variable order!
-                f2.variableOrder.insert(f1.variables[v], v)
-                for idx, v in enumerate(f2.variableOrder):
-                    f2.variables[v] = idx
-            else:
-                #Roll axes around so that they align. Cannot use f2.variables[v] since
-                # new axes might have been inserted in the meantime
-                f2.potentials = np.rollaxis(f2.potentials, f2.variableOrder.index(v), f1.variables[v])
-                
-                f2.variableOrder.remove(v)
-                f2.variableOrder.insert(f1.variables[v], v)
-                for idx, v in enumerate(f2.variableOrder):
-                    f2.variables[v] = idx
-
-        # Pointwise multiplication which results in a factor where all instantiations
-        # are compatible to the instantiations of factor1 and factor2
-        # See Definition 6.3 in "Modeling and Reasoning with Bayesian Networks" - Adnan Darwiche Chapter 6
-        f1.potentials = f1.potentials * f2.potentials
-
-        return f1
-    
+   
     
     def marginalize(self, variables):
         """
@@ -416,16 +411,11 @@ class Factor(object):
         if not isinstance(variables, (list,set)):
             variables = [variables]
             
-        res = copy.deepcopy(self)
+        res = self.copy()
         for v in variables:
             res.potentials = np.sum(res.potentials, axis=res.variableOrder.index(v))
             del res.values[v]
             res.variableOrder.remove(v)
-            
-        res.variables = {}
-        #Fix variable index dictionary:
-        for idx, v in enumerate(res.variableOrder):
-            res.variables[v] = idx
             
         return res
         
