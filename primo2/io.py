@@ -31,6 +31,25 @@ class XMLBIFParser(object):
         
     @staticmethod
     def parse(filename, ignoreProperties=True):
+        """
+            Static parsing method for xbif files.
+            
+            Parameters
+            ----------
+            filename: String
+                Path of the xbif file to be loaded.
+                
+            ignoreProperties: Boolean (optional)
+                If given, will ignore any PROPERTY tags in the xbif file, 
+                otherwise those elements will be stored in a meta attribute
+                either on the network class or the variable node, depending
+                on the nesting of the PROPERTY-tag. Default: True
+            
+            Returns
+            -------
+                BayesianNetwork
+                The parsed network from the xbif file.
+        """
         bn = networks.BayesianNetwork()
 
         tree = et.parse(filename)
@@ -72,6 +91,22 @@ class XMLBIFParser(object):
         
     @staticmethod
     def write(bn, filename, ignoreProperties=False):
+        """
+            Static writing method for xbif files.
+            
+            Parameters
+            ----------
+            filename: String
+                Path of the xbif file to be written.
+                
+            ignoreProperties: Boolean (optional)
+                If given, any meta information in either the network or the
+                variable nodes will not be written to the xbif file, 
+                otherwise a PROPERTY-tag will be created for each element in
+                the meta attribute, nested either directly below the network 
+                (for network meta data) or the corresponding variable (for
+                variable meta data). Default: True
+        """
         root = et.Element("BIF")
         root.attrib["VERSION"] = "0.3"
         network = et.SubElement(root, "NETWORK")
