@@ -34,6 +34,7 @@ class RandomNode(object):
     def __init__(self, nodename):
         self.name = nodename
         self.cpd = 1
+        self.meta = []
         
     def set_cpd(self, cpd):
         raise NotImplementedError("Called unimplemented method.")

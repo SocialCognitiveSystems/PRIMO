@@ -188,6 +188,11 @@ class FactorEliminationTest(unittest.TestCase):
         resFactor = ft.marginals(["slippery_road"])
         np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.364, 0.636]))
         
+    def test_jointree_marginals3(self):
+        ft = FactorTree.create_jointree(self.bn)
+        resFactor = ft.marginals(["sprinkler"])
+        np.testing.assert_array_almost_equal(resFactor.get_potential(), np.array([0.42, 0.58]))
+        
     def test_jointree_marginals_trivial_evidence(self):
         ft = FactorTree.create_jointree(self.bn)
         ft.set_evidence({"slippery_road":"true"})
