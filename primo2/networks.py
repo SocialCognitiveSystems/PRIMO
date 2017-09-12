@@ -31,6 +31,7 @@ class BayesianNetwork(object):
         self.graph = nx.DiGraph()
         self.node_lookup = {}
         self.name = "" #Only used to be compatible with XMLBIF
+        self.meta = [] #Used to be compatible with XMLBIF, stores properties 
 
     def add_node(self, node):
         if isinstance(node, nodes.RandomNode):

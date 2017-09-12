@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
     <BIF VERSION="0.3">
         <NETWORK>
+            <PROPERTY>Random network property</PROPERTY>
+            <PROPERTY>Author jpoeppel</PROPERTY>
             <NAME>Test Net</NAME>
             <VARIABLE TYPE="nature">
                 <NAME>Burglary</NAME>
@@ -14,6 +16,7 @@
                 <OUTCOME>Silent</OUTCOME>
                 <OUTCOME>Kaputt</OUTCOME>
                 <PROPERTY>position = (300, 100)</PROPERTY>
+                <PROPERTY>Random meta test</PROPERTY>
             </VARIABLE>
             <VARIABLE TYPE="nature">
                 <NAME>John_calls</NAME>

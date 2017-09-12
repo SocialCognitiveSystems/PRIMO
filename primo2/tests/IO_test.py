@@ -19,7 +19,7 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-
+import os
 import unittest
 import numpy as np
 
@@ -66,6 +66,44 @@ class XMLBIFTest(unittest.TestCase):
         cpt = np.array([[[0.8,0.5,0.7],[0.6,0.2,0.1]],[[0.2,0.5,0.3],[0.4,0.8,0.9]]])
         np.testing.assert_array_almost_equal(johnNode.cpd, cpt)
         
+    def test_readXMLBIF_with_variable_properties(self):
+        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=False)
+        
+        johnNode = bn.get_node("John_calls")
+        self.assertEqual(len(johnNode.meta), 1)
+        self.assertTrue("position" in johnNode.meta[0])
+        
+        alarmNode = bn.get_node("Alarm")
+        
+        self.assertEqual(len(alarmNode.meta), 2)
+        self.assertTrue("position" in alarmNode.meta[0])
+        self.assertEqual("Random meta test", alarmNode.meta[1])
+        
+    def test_readXMLBIF_with_variable_properties_ignored(self):
+        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=True)
+        johnNode = bn.get_node("John_calls")
+        self.assertEqual(len(johnNode.meta), 0)
+        
+        alarmNode = bn.get_node("Alarm")
+        self.assertEqual(len(alarmNode.meta), 0)
+        
+    def test_readXMLBIF_with_network_properties(self):
+        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=False)
+        
+        self.assertEqual(len(bn.meta), 2)
+        self.assertEqual("Random network property", bn.meta[0])
+        self.assertEqual("Author jpoeppel", bn.meta[1])
+        
+        bn = XMLBIFParser.parse("primo2/tests/slippery.xbif", ignoreProperties=False)
+        self.assertEqual(len(bn.meta), 0)
+        
+    def test_readXMLBIF_with_network_properties_ignored(self):
+        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=True)
+        self.assertEqual(len(bn.meta), 0)
+        
+        
+        
+        
     def test_writeXMLBIF_simple(self):
         path= "primo2/tests/test.xbif"
         bn = BayesianNetwork()
@@ -104,9 +142,57 @@ class XMLBIFTest(unittest.TestCase):
         import os
         os.remove(testPath)
         
+    def test_writeXMLBIF_with_network_properties_ignored(self):
+        testPath = "primo2/tests/testSlippery.xbif"
+        bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
+        bn.meta = ["Dummy property"]
+        XMLBIFParser.write(bn, testPath, ignoreProperties=True)
+        bn2 = XMLBIFParser.parse(testPath, ignoreProperties=False)
+        self.assertEqual(len(bn2.meta),0)
+        self.assertEqual("Dummy property", bn.meta[0])
+        os.remove(testPath)
+        
+    def test_writeXMLBIF_with_network_properties(self):
+        testPath = "primo2/tests/testSlippery.xbif"
+        bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
+        bn.meta = ["Dummy property"]
+        XMLBIFParser.write(bn, testPath, ignoreProperties=False)
+        bn2 = XMLBIFParser.parse(testPath, ignoreProperties=False)
+        self.assertEqual(len(bn2.meta),1)
+        self.assertEqual("Dummy property", bn.meta[0])
+        os.remove(testPath)
+        
+    def test_writeXMLBIF_with_variable_properties_ignored(self):
+        testPath = "primo2/tests/test_testfile.xbif"
+        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=False)
+        XMLBIFParser.write(bn, testPath, ignoreProperties=True)
+        bn2 = XMLBIFParser.parse(testPath, ignoreProperties=False)
+        johnNode = bn2.get_node("John_calls")
+        self.assertEqual(len(johnNode.meta), 0)
+        
+        alarmNode = bn2.get_node("Alarm")
+        self.assertEqual(len(alarmNode.meta), 0)
+        os.remove(testPath)
+    
+    def test_writeXMLBIF_with_variable_properties(self):
+        testPath = "primo2/tests/test_testfile.xbif"
+        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=False)
+        XMLBIFParser.write(bn, testPath, ignoreProperties=False)
+        bn2 = XMLBIFParser.parse(testPath, ignoreProperties=False)
+        johnNode = bn2.get_node("John_calls")
+        self.assertEqual(len(johnNode.meta), 1)
+        self.assertTrue("position" in johnNode.meta[0])
+        
+        alarmNode = bn2.get_node("Alarm")
+        
+        self.assertEqual(len(alarmNode.meta), 2)
+        self.assertTrue("position" in alarmNode.meta[0])
+        self.assertEqual("Random meta test", alarmNode.meta[1])
+        os.remove(testPath)
+        
 if __name__ == "__main__":
     #Workaround so that this script also finds the resource files when run directly
     # from within the tests folder
-    import os
+    
     os.chdir("../..")
     unittest.main()
