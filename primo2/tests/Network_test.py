@@ -21,7 +21,7 @@
 
 import unittest
 from primo2.networks import BayesianNetwork
-from primo2.nodes import RandomNode
+from primo2.nodes import RandomNode, DiscreteNode
 
 class BayesNetTest(unittest.TestCase):
     
@@ -52,6 +52,18 @@ class BayesNetTest(unittest.TestCase):
         self.assertEqual(len(self.bn), 1)
         self.bn.add_node(n2)
         self.assertEqual(len(self.bn), 2)
+        
+    def test_change_node_values_of_parent(self):
+        n1 = DiscreteNode("Node1")
+        n2 = DiscreteNode("Node2")
+        self.bn.add_node(n1)
+        self.bn.add_node(n2)
+        self.bn.add_edge(n2,n1)
+        self.assertEqual(n1.cpd.shape, (2,2))
+        self.bn.change_node_values(n2, ["Value1","Value2","Value3"])
+        self.assertEqual(n2.values, ["Value1","Value2","Value3"])
+        self.assertEqual(n1.valid, False)
+        self.assertEqual(n1.cpd.shape, (2,3))
         
                 
 #    def test_addEdge(self):
