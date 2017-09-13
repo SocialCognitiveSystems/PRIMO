@@ -65,6 +65,23 @@ class BayesNetTest(unittest.TestCase):
         self.assertEqual(n1.valid, False)
         self.assertEqual(n1.cpd.shape, (2,3))
         
+        
+    def test_change_node_name(self):
+        n1 = DiscreteNode("Node1")
+        n2 = DiscreteNode("Node2")
+        self.bn.add_node(n1)
+        self.bn.add_node(n2)
+        self.bn.add_edge(n2,n1)
+        self.bn.change_node_name("Node2", "NewName")
+        
+        self.assertEqual(n2.name, "NewName")
+        with self.assertRaises(Exception) as cm:
+            self.bn.get_node("Node2")
+        self.assertEqual(str(cm.exception), "There is no node with name Node2 in the BayesianNetwork")
+        
+        self.assertEqual(n1.parentOrder, ["NewName"])
+        
+        
                 
 #    def test_addEdge(self):
 #        self.fail("TODO")
