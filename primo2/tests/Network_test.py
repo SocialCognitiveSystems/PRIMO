@@ -80,6 +80,9 @@ class BayesNetTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "There is no node with name Node2 in the BayesianNetwork")
         
         self.assertEqual(n1.parentOrder, ["NewName"])
+        self.assertTrue(n2 in self.bn.graph.nodes())
+        self.assertTrue(n2 in self.bn.node_lookup)
+        self.assertTrue(n1 in self.bn.graph.succ[n2])
         
         
                 

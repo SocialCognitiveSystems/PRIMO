@@ -89,7 +89,25 @@ class BayesianNetwork(object):
             Will have to modify all occurances of the old name.
         """
         if oldName in self.node_lookup:
-            pass
+            n = self.node_lookup[oldName]
+            children = list(self.graph.succ[n])
+            for child in children:
+                del child.parents[oldName]
+                child.parents[newName] = n
+                idx = child.parentOrder.index(oldName)
+                child.parentOrder[idx] = newName
+            
+             #Fix nx graph
+            self.graph.remove_node(n)
+            
+            n.name = newName
+            del self.node_lookup[oldName]
+            self.node_lookup[n] = n
+           
+            self.graph.add_node(n)
+            for child in children:
+                self.graph.add_edge(n, self.node_lookup[child])
+            
         else:
             raise Exception("There is no node with name {} in the network.".format(oldName))
 
