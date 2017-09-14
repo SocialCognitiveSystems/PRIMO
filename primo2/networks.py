@@ -91,6 +91,7 @@ class BayesianNetwork(object):
         if oldName in self.node_lookup:
             n = self.node_lookup[oldName]
             children = list(self.graph.succ[n])
+            parents = list(self.graph.pred[n])
             for child in children:
                 del child.parents[oldName]
                 child.parents[newName] = n
@@ -107,6 +108,8 @@ class BayesianNetwork(object):
             self.graph.add_node(n)
             for child in children:
                 self.graph.add_edge(n, self.node_lookup[child])
+            for parent in parents:
+                self.graph.add_edge(self.node_lookup[parent], n)
             
         else:
             raise Exception("There is no node with name {} in the network.".format(oldName))

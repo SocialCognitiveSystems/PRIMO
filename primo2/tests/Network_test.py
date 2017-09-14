@@ -69,9 +69,12 @@ class BayesNetTest(unittest.TestCase):
     def test_change_node_name(self):
         n1 = DiscreteNode("Node1")
         n2 = DiscreteNode("Node2")
+        n3 = DiscreteNode("Node3")
         self.bn.add_node(n1)
         self.bn.add_node(n2)
+        self.bn.add_node(n3)
         self.bn.add_edge(n2,n1)
+        self.bn.add_edge(n3,n2)
         self.bn.change_node_name("Node2", "NewName")
         
         self.assertEqual(n2.name, "NewName")
@@ -83,6 +86,8 @@ class BayesNetTest(unittest.TestCase):
         self.assertTrue(n2 in self.bn.graph.nodes())
         self.assertTrue(n2 in self.bn.node_lookup)
         self.assertTrue(n1 in self.bn.graph.succ[n2])
+        self.assertTrue(n3 in self.bn.graph.pred[n2])
+        self.assertTrue(n2 in self.bn.graph.succ[n3])
         
         
                 
