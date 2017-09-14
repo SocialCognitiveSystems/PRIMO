@@ -203,6 +203,26 @@ class DBNSpecTest(unittest.TestCase):
         self.assertEqual(dbn._b0.name, "Test_DBN_B0")
         self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
         os.chdir("../..")
+        
+    def test_parseDBN_absolute_path(self):
+        import shutil
+        if os.path.exists("/tmp"):
+            shutil.copyfile("primo2/tests/dbn-test-b0.xbif", "/tmp/dbn-test-b0.xbif")
+            shutil.copyfile("primo2/tests/dbn-test-2tbn.xbif", "/tmp/dbn-test-2tbn.xbif")
+            dbn = DBNSpec.parse("primo2/tests/dbn-test-abs.conf")
+            self.assertEqual(dbn._b0.name, "Test_DBN_B0")
+            self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
+            os.remove("/tmp/dbn-test-b0.xbif")
+            os.remove("/tmp/dbn-test-2tbn.xbif")
+            
+    def test_parseDBN_mixed_path(self):
+        import shutil
+        if os.path.exists("/tmp"):
+            shutil.copyfile("primo2/tests/dbn-test-b0.xbif", "/tmp/dbn-test-b0.xbif")
+            dbn = DBNSpec.parse("primo2/tests/dbn-test-mixed.conf")
+            self.assertEqual(dbn._b0.name, "Test_DBN_B0")
+            self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
+            os.remove("/tmp/dbn-test-b0.xbif")
     
 if __name__ == "__main__":
     #Workaround so that this script also finds the resource files when run directly
