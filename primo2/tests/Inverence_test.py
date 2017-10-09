@@ -153,6 +153,19 @@ class FactorEliminationTest(unittest.TestCase):
         self.bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         
         
+    def test_not_connected_node_without_cpt(self):
+#        bn = BayesianNetwork()
+        from primo2.nodes import DiscreteNode
+        n = DiscreteNode("a")
+        self.bn.add_node(n)
+        ft = FactorTree.create_jointree(self.bn)
+        ft.set_evidence({"a": "False"})
+        res = ft.marginals(["a"])
+        #Even with evidence set, when we do not have a cpt the result should remain
+        #at 0! Even if only to indicate that something might be wrong with that
+        #node.
+        np.testing.assert_array_almost_equal(res.get_potential(), np.array([0.0, 0.0])) 
+        
     def test_empty_cpt(self):
         bn = BayesianNetwork()
         from primo2.nodes import DiscreteNode
