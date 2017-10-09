@@ -107,7 +107,7 @@ class DiscreteNode(RandomNode):
         self.parentOrder.append(parentNode.name)
         self._update_dimensions()
         
-    def set_values(self, newValues):
+    def set_values(self, new_values):
         """
             Allows to change/set the values of this variable. This will 
             invalidate the node, as it is expected to receive a new cpt 
@@ -120,10 +120,10 @@ class DiscreteNode(RandomNode):
             
             Parameters
             ----------
-            newValues: [String,]
+            new_values: [String,]
                 List of the new value names.
         """
-        self.values = list(newValues)
+        self.values = list(new_values)
         self._update_dimensions()        
         
         

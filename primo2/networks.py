@@ -70,14 +70,21 @@ class BayesianNetwork(object):
         except KeyError:
             raise Exception("There is no node with name {} in the BayesianNetwork".format(node_name))
             
-    def change_node_values(self, node, newValues):
+    def change_node_values(self, node, new_values):
         """
             Updates the values of the given node. This will invalidate the node
             and all it's children, as those nodes will expect new CPTs to match
             the new values!
+            
+            Parameters
+            ---------
+            node: String or RandomNode
+                The node whose values should be changed.
+            new_values: [String,]
+                List of the new value names.
         """
         if node in self.node_lookup:
-            self.node_lookup[node].set_values(newValues)
+            self.node_lookup[node].set_values(new_values)
             for child in self.graph.succ[node]:
                 child._update_dimensions()
         else:
