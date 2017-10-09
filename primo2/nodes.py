@@ -107,6 +107,26 @@ class DiscreteNode(RandomNode):
         self.parentOrder.append(parentNode.name)
         self._update_dimensions()
         
+    def set_values(self, newValues):
+        """
+            Allows to change/set the values of this variable. This will 
+            invalidate the node, as it is expected to receive a new cpt 
+            matching the new values.
+            
+            Important: This will not update any children of this node, 
+            therefore this method should only be used before specifying 
+            children, or only by the network class which will also invalidate
+            all children of this node!
+            
+            Parameters
+            ----------
+            newValues: [String,]
+                List of the new value names.
+        """
+        self.values = list(newValues)
+        self._update_dimensions()        
+        
+        
     def _update_dimensions(self):
         """
             Private helper function to update the dimensions of the cpd.
