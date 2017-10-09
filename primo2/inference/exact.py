@@ -227,6 +227,8 @@ class FactorTree(object):
             clusterSeq.remove(rem)
             clusterSeq.insert(idx, move)
             clusterSeq.remove(move)
+            
+#        print("clusters: ", clusterSeq)
         # Construct jointree
         tree = nx.Graph(messagesValid=False)
         if len(clusterSeq) > 0:
@@ -239,12 +241,15 @@ class FactorTree(object):
                               factor=Factor.get_trivial())
                 jointreeProp = set(clusterSeq[i]).intersection(
                                                 set().union(*clusterSeq[i+1:]))
+#                print("curCluster: {}, joinTreeprop: {}".format(clusterSeq[i], jointreeProp))
                 for cl in clusterSeq[i+1:]:
-                    if jointreeProp.issubset(set(cl)):
+                    if len(jointreeProp) != 0 and  jointreeProp.issubset(set(cl)):
                         tree.add_edge("".join(clusterSeq[i]), "".join(cl), 
                                       sep=jointreeProp, 
                                       factor=Factor.get_trivial())
                         break
+                    
+#        print("tree: ", list(tree.neighbors_iter("a")))
                     
         # Assign factors to clusters
         for f in factors:
@@ -433,7 +438,11 @@ class FactorTree(object):
             if neighbor != parent:
                 #Send message out to neighbor
                 newSeqFactor = tree.node[curNode]["factor"].marginalize(tree.node[curNode]["variables"]-tree[curNode][neighbor]["sep"])
-                tree.node[neighbor]["factor"] = tree.node[neighbor]["factor"] * (newSeqFactor / tree[curNode][neighbor]["factor"])
+                try:
+                    tree.node[neighbor]["factor"] = tree.node[neighbor]["factor"] * (newSeqFactor / tree[curNode][neighbor]["factor"])
+                except FloatingPointError as e:
+                    print("CurNode: {}, neighbor: {}".format(curNode, neighbor))
+                    raise FloatingPointError(e)
                 tree[curNode][neighbor]["factor"] = newSeqFactor
                 # Have neighbor pushing out further
                 self.push_messages(tree, neighbor, curNode)
