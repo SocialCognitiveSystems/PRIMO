@@ -230,6 +230,14 @@ class FactorTree(object):
             
         # Construct jointree
         tree = nx.Graph(messagesValid=False)
+        
+        
+        #Monkey patch networkx 1.x versions to still user iterator functions:
+        if int(nx.__version__[0]) < 2:
+            tree.nodes = tree.nodes_iter
+            tree.neighbors = tree.neighbors_iter
+            
+        
         if len(clusterSeq) > 0:
             tree.add_node("".join(clusterSeq[-1]), 
                           variables=set(clusterSeq[-1]), 
@@ -250,7 +258,7 @@ class FactorTree(object):
                     
         # Assign factors to clusters
         for f in factors:
-            for treeNode, treeData in tree.nodes_iter(data=True):
+            for treeNode, treeData in tree.nodes(data=True): #was nodes_iter in networkx 1.x
                 if set(f.values).issubset(treeData["variables"]):
                     treeData["factor"] = treeData["factor"] * f
                     break
@@ -269,13 +277,13 @@ class FactorTree(object):
         for n in self.bn.get_all_nodes():
             factors.append(Factor.from_node(n))
         #Reset factors in nodes and edges of the tree
-        for treeNode, treeData in self.tree.nodes_iter(data=True):
+        for treeNode, treeData in self.tree.nodes(data=True): #was nodes_iter in networkx 1.x
             treeData["factor"] = Factor.get_trivial()
-        for u,b, edgeData in self.tree.edges_iter(data=True):
+        for u,b, edgeData in self.tree.edges(data=True): # was edges_iter
             edgeData["factor"] = Factor.get_trivial()
             
         for f in factors:
-            for treeNode, treeData in self.tree.nodes_iter(data=True):
+            for treeNode, treeData in self.tree.nodes(data=True): #was nodes_iter in networkx 1.x
                 if set(f.values).issubset(treeData["variables"]):
                     treeData["factor"] = treeData["factor"] * f
                     break
@@ -322,7 +330,7 @@ class FactorTree(object):
             evidenceFactor = Factor.as_evidence(e, 
                                     self.bn.get_node(e).values, 
                                     evidence[e], oldMarginals=oldMarginals[e])
-            for node, nodeData in self.tree.nodes_iter(data=True):
+            for node, nodeData in self.tree.nodes(data=True): #was nodes_iter in networkx 1.x
                 if e in nodeData["variables"]:
                     nodeData["factor"] = nodeData["factor"] * evidenceFactor
                     break
@@ -358,7 +366,7 @@ class FactorTree(object):
             
         # Determine clique containing variables:
         varSet = set(variables)
-        for treeNode, treeData in self.tree.nodes_iter(data=True):
+        for treeNode, treeData in self.tree.nodes(data=True): #was nodes_iter in networkx 1.x
             if varSet.issubset(treeData["variables"]):
                 resFactor = treeData["factor"].marginalize(treeData["variables"] - varSet)
                 resFactor.normalize()
@@ -378,7 +386,7 @@ class FactorTree(object):
             jointree.
         """
         try:
-            root = self.tree.nodes()[0]
+            root = list(self.tree.nodes())[0]
             self.pull_messages(self.tree, root, None)
             self.push_messages(self.tree, root, None)
             self.tree.graph["messagesValid"] = True
@@ -402,7 +410,7 @@ class FactorTree(object):
                 Name of the parent node the message should be passed to.
         """
         #Let neighbors collect messages
-        for neighbor in tree.neighbors_iter(curNode):
+        for neighbor in tree.neighbors(curNode): #was neighbors_iter in networkx 1.x
             if neighbor != parent:
                 self.pull_messages(tree, neighbor, curNode)
                       
@@ -431,7 +439,7 @@ class FactorTree(object):
                 Name of the parent node to avoid sending messages back to the
                 parent.
         """
-        for neighbor in tree.neighbors_iter(curNode):
+        for neighbor in tree.neighbors(curNode): #was neighbors_iter in networkx 1.x
             if neighbor != parent:
                 #Send message out to neighbor
                 newSeqFactor = tree.node[curNode]["factor"].marginalize(tree.node[curNode]["variables"]-tree[curNode][neighbor]["sep"])

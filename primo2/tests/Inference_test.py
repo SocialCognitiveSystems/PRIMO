@@ -188,7 +188,7 @@ class FactorEliminationTest(unittest.TestCase):
                           "winterrainsprinkler", "rainsprinklerwinter", 
                           "rainwintersprinkler"]
         self.assertEqual(len(ft.tree), 3)
-        for n in ft.tree.nodes_iter():
+        for n in ft.tree.nodes(): # was nodes_iter in networkx 1.x
             self.assertTrue(n in desiredCliques)
         
     def test_jointree_marginals(self):
