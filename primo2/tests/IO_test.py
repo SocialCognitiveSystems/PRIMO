@@ -164,7 +164,8 @@ class XMLBIFTest(unittest.TestCase):
         
     def test_writeXMLBIF_with_variable_properties_ignored(self):
         testPath = "primo2/tests/test_testfile.xbif"
-        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=False)
+        readPath = "primo2/tests/testfile.xbif"
+        bn = XMLBIFParser.parse(readPath, ignoreProperties=False)
         XMLBIFParser.write(bn, testPath, ignoreProperties=True)
         bn2 = XMLBIFParser.parse(testPath, ignoreProperties=False)
         johnNode = bn2.get_node("John_calls")
@@ -203,6 +204,39 @@ class DBNSpecTest(unittest.TestCase):
         self.assertEqual(dbn._b0.name, "Test_DBN_B0")
         self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
         os.chdir("../..")
+        
+    def test_parseDBN_relative(self):
+        import shutil
+        shutil.copyfile("primo2/tests/dbn-test-b0.xbif", "primo2/dbn-test-b0.xbif")
+        shutil.copyfile("primo2/tests/dbn-test-2tbn.xbif", "primo2/dbn-test-2tbn.xbif")
+        dbn = DBNSpec.parse("primo2/tests/dbn-test-relative.conf")
+        self.assertEqual(dbn._b0.name, "Test_DBN_B0")
+        self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
+        #Clean up
+        os.remove("primo2/dbn-test-b0.xbif")
+        os.remove("primo2/dbn-test-2tbn.xbif")
+        
+    def test_parseDBN_absolute_path(self):
+        if os.path.exists("/tmp"):
+            import shutil
+            shutil.copyfile("primo2/tests/dbn-test-b0.xbif", "/tmp/dbn-test-b0.xbif")
+            shutil.copyfile("primo2/tests/dbn-test-2tbn.xbif", "/tmp/dbn-test-2tbn.xbif")
+            dbn = DBNSpec.parse("primo2/tests/dbn-test-abs.conf")
+            self.assertEqual(dbn._b0.name, "Test_DBN_B0")
+            self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
+            #Clean up
+            os.remove("/tmp/dbn-test-b0.xbif")
+            os.remove("/tmp/dbn-test-2tbn.xbif")
+            
+    def test_parseDBN_mixed_path(self):
+        if os.path.exists("/tmp"):
+            import shutil
+            shutil.copyfile("primo2/tests/dbn-test-b0.xbif", "/tmp/dbn-test-b0.xbif")
+            dbn = DBNSpec.parse("primo2/tests/dbn-test-mixed.conf")
+            self.assertEqual(dbn._b0.name, "Test_DBN_B0")
+            self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
+            #Clean up
+            os.remove("/tmp/dbn-test-b0.xbif")
     
 if __name__ == "__main__":
     #Workaround so that this script also finds the resource files when run directly

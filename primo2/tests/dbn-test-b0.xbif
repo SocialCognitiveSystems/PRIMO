@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<!--
+  Bayesian network in XMLBIF v0.3 (BayesNet Interchange Format)
+  Produced by SamIam http://reasoning.cs.ucla.edu/samiam
+  Output created Feb 13, 2017 4:29:38 PM
+-->
+
+<BIF VERSION="0.3">
+<NETWORK>
+  <NAME>Test_DBN_B0</NAME>
+
+  <VARIABLE TYPE="nature">
+    <NAME>A</NAME>
+    <OUTCOME>True</OUTCOME>
+    <OUTCOME>False</OUTCOME>
+    <PROPERTY>position = (300, 0)</PROPERTY>
+  </VARIABLE>
+
+  <VARIABLE TYPE="nature">
+    <NAME>B</NAME>
+    <OUTCOME>True</OUTCOME>
+    <OUTCOME>False</OUTCOME>
+    <PROPERTY>position = (400, 0)</PROPERTY>
+  </VARIABLE>
+
+  <VARIABLE TYPE="nature">
+    <NAME>C</NAME>
+    <OUTCOME>True</OUTCOME>
+    <OUTCOME>False</OUTCOME>
+    <PROPERTY>position = (300, 0)</PROPERTY>
+  </VARIABLE>
+
+
+  <DEFINITION>
+    <FOR>B</FOR>
+    <TABLE>0.5 0.5 </TABLE>
+  </DEFINITION>
+
+  <DEFINITION>
+    <FOR>C</FOR>
+    <TABLE>0.2 0.8 </TABLE>
+  </DEFINITION>
+
+</NETWORK>
+</BIF>

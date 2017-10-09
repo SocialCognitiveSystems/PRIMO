@@ -180,9 +180,16 @@ class DBNSpec(object):
         with open(filename) as json_data:
             spec = json.load(json_data)
             
+        
         basepath = os.path.dirname(os.path.abspath(filename))
-        b0 = XMLBIFParser.parse(basepath + os.path.sep + spec['B0'])
-        two_tbn = XMLBIFParser.parse(basepath + os.path.sep + spec['TBN'])
+        if os.path.isabs(spec['B0']):
+            b0 = XMLBIFParser.parse(spec['B0'])
+        else:
+            b0 = XMLBIFParser.parse(basepath + os.path.sep + spec['B0'])
+        if os.path.isabs(spec['TBN']):
+            two_tbn = XMLBIFParser.parse(spec['TBN'])
+        else:
+            two_tbn = XMLBIFParser.parse(basepath + os.path.sep + spec['TBN'])
         dbn = networks.DynamicBayesianNetwork(b0, two_tbn)
         for transition in spec['transitions']:
             dbn.add_transition(transition[0], transition[1])

@@ -90,6 +90,37 @@ class BayesianNetwork(object):
         else:
             raise Exception("There is no node with name {} in the network.".format(node))
             
+            
+    def change_node_name(self, oldName, newName):
+        """
+            Renames the given node to the new name. 
+            Will have to modify all occurances of the old name.
+        """
+        if oldName in self.node_lookup:
+            n = self.node_lookup[oldName]
+            children = list(self.graph.succ[n])
+            parents = list(self.graph.pred[n])
+            for child in children:
+                del child.parents[oldName]
+                child.parents[newName] = n
+                idx = child.parentOrder.index(oldName)
+                child.parentOrder[idx] = newName
+            
+             #Fix nx graph
+            self.graph.remove_node(n)
+            
+            n.name = newName
+            del self.node_lookup[oldName]
+            self.node_lookup[n] = n
+           
+            self.graph.add_node(n)
+            for child in children:
+                self.graph.add_edge(n, self.node_lookup[child])
+            for parent in parents:
+                self.graph.add_edge(self.node_lookup[parent], n)
+            
+        else:
+            raise Exception("There is no node with name {} in the network.".format(oldName))
 
     def get_all_nodes(self):
         return self.graph.nodes()
