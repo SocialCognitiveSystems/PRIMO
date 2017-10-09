@@ -106,6 +106,22 @@ class DiscreteNode(unittest.TestCase):
         n.set_cpd(cpd)
         self.assertTrue(n.valid)
         
+    def test_set_values(self):
+        n = nodes.DiscreteNode("Node1")
+        n.set_values(["Value1", "Value2", "Value3"])
+        self.assertEqual(n.cpd.shape, (3,))
+        self.assertEqual(n.values, ["Value1", "Value2", "Value3"])
+        self.assertEqual(n.valid, False)
+        
+    def test_set_values_with_parent(self):
+        n = nodes.DiscreteNode("Node1")
+        n2 = nodes.DiscreteNode("Node2")
+        n.add_parent(n2)
+        n.set_values(["Value1", "Value2", "Value3"])
+        self.assertEqual(n.cpd.shape, (3,2))
+        self.assertEqual(n.values, ["Value1", "Value2", "Value3"])
+        self.assertEqual(n.valid, False)
+        
     def test_add_parent(self):
         n = nodes.DiscreteNode("Node1", ["Value1", "Value2"])
         n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
