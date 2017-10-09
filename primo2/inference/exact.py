@@ -258,7 +258,7 @@ class FactorTree(object):
                     
         # Assign factors to clusters
         for f in factors:
-            for treeNode, treeData in tree.nodes(data=True):
+            for treeNode, treeData in tree.nodes(data=True): #was nodes_iter in networkx 1.x
                 if set(f.values).issubset(treeData["variables"]):
                     treeData["factor"] = treeData["factor"] * f
                     break
