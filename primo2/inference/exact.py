@@ -435,11 +435,7 @@ class FactorTree(object):
             if neighbor != parent:
                 #Send message out to neighbor
                 newSeqFactor = tree.node[curNode]["factor"].marginalize(tree.node[curNode]["variables"]-tree[curNode][neighbor]["sep"])
-                try:
-                    tree.node[neighbor]["factor"] = tree.node[neighbor]["factor"] * (newSeqFactor / tree[curNode][neighbor]["factor"])
-                except FloatingPointError as e:
-                    print("CurNode: {}, neighbor: {}".format(curNode, neighbor))
-                    raise FloatingPointError(e)
+                tree.node[neighbor]["factor"] = tree.node[neighbor]["factor"] * (newSeqFactor / tree[curNode][neighbor]["factor"])
                 tree[curNode][neighbor]["factor"] = newSeqFactor
                 # Have neighbor pushing out further
                 self.push_messages(tree, neighbor, curNode)
