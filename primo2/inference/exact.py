@@ -228,7 +228,6 @@ class FactorTree(object):
             clusterSeq.insert(idx, move)
             clusterSeq.remove(move)
             
-#        print("clusters: ", clusterSeq)
         # Construct jointree
         tree = nx.Graph(messagesValid=False)
         if len(clusterSeq) > 0:
@@ -241,7 +240,6 @@ class FactorTree(object):
                               factor=Factor.get_trivial())
                 jointreeProp = set(clusterSeq[i]).intersection(
                                                 set().union(*clusterSeq[i+1:]))
-#                print("curCluster: {}, joinTreeprop: {}".format(clusterSeq[i], jointreeProp))
                 for cl in clusterSeq[i+1:]:
                     if len(jointreeProp) != 0 and  jointreeProp.issubset(set(cl)):
                         tree.add_edge("".join(clusterSeq[i]), "".join(cl), 
@@ -249,7 +247,6 @@ class FactorTree(object):
                                       factor=Factor.get_trivial())
                         break
                     
-#        print("tree: ", list(tree.neighbors_iter("a")))
                     
         # Assign factors to clusters
         for f in factors:
