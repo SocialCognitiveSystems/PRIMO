@@ -164,7 +164,8 @@ class XMLBIFTest(unittest.TestCase):
         
     def test_writeXMLBIF_with_variable_properties_ignored(self):
         testPath = "primo2/tests/test_testfile.xbif"
-        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=False)
+        readPath = "primo2/tests/testfile.xbif"
+        bn = XMLBIFParser.parse(readPath, ignoreProperties=False)
         XMLBIFParser.write(bn, testPath, ignoreProperties=True)
         bn2 = XMLBIFParser.parse(testPath, ignoreProperties=False)
         johnNode = bn2.get_node("John_calls")
@@ -190,19 +191,7 @@ class XMLBIFTest(unittest.TestCase):
         self.assertEqual("Random meta test", alarmNode.meta[1])
         os.remove(testPath)
         
-class DBNSpecTest(unittest.TestCase):
-    
-    def test_parseDBN(self):
-        dbn = DBNSpec.parse("primo2/tests/dbn-test.conf")
-        self.assertEqual(dbn._b0.name, "Test_DBN_B0")
-        self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
-    
-    def test_parseDBN_local_dir(self):
-        os.chdir("primo2/tests")
-        dbn = DBNSpec.parse("dbn-test.conf")
-        self.assertEqual(dbn._b0.name, "Test_DBN_B0")
-        self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
-        os.chdir("../..")
+
     
 if __name__ == "__main__":
     #Workaround so that this script also finds the resource files when run directly
