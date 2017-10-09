@@ -53,7 +53,7 @@ class Orderer(object):
         interactionG = bn.graph.to_undirected()
         res = []        
         for i in range(len(bn.get_all_node_names())):
-            degrees = interactionG.degree()
+            degrees = dict(interactionG.degree())
             varToElim = sorted(degrees.items(), key=itemgetter(1))[0][0]
             res.append(varToElim.name)
             for p in interactionG[varToElim]:#.parents:
