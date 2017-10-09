@@ -164,7 +164,8 @@ class XMLBIFTest(unittest.TestCase):
         
     def test_writeXMLBIF_with_variable_properties_ignored(self):
         testPath = "primo2/tests/test_testfile.xbif"
-        bn = XMLBIFParser.parse("primo2/tests/testfile.xbif", ignoreProperties=False)
+        readPath = "primo2/tests/testfile.xbif"
+        bn = XMLBIFParser.parse(readPath, ignoreProperties=False)
         XMLBIFParser.write(bn, testPath, ignoreProperties=True)
         bn2 = XMLBIFParser.parse(testPath, ignoreProperties=False)
         johnNode = bn2.get_node("John_calls")
