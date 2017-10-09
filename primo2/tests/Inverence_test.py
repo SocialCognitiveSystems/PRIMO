@@ -153,6 +153,15 @@ class FactorEliminationTest(unittest.TestCase):
         self.bn = XMLBIFParser.parse("primo2/tests/slippery.xbif")
         
         
+    def test_trivial_network(self):
+#        bn = BayesianNetwork()
+        from primo2.nodes import DiscreteNode
+        n = DiscreteNode("a")
+        self.bn.add_node(n)
+        ft = FactorTree.create_jointree(self.bn)
+        ft.set_evidence({"a": "False"})
+        
+        
     def test_empty_cpt(self):
         bn = BayesianNetwork()
         from primo2.nodes import DiscreteNode
