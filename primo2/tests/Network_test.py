@@ -110,9 +110,6 @@ class BayesNetTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), "There is no node with name " \
                          "Node2 in the BayesianNetwork")
         
-        print("lookup old name: ", self.bn.node_lookup["NewName"])
-        
-        
         self.bn.change_node_name("NewName", "2ndNewName")
         self.assertEqual(n2.name, "2ndNewName")
         with self.assertRaises(Exception) as cm:
