@@ -5,7 +5,7 @@ Created on Fri Dec  8 11:47:10 2017
 
 @author: jpoeppel
 """
-
+from __future__ import division 
 import unittest
 
 import numpy as np

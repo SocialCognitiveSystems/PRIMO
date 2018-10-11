@@ -27,7 +27,7 @@ primo module
 """
 
 import numpy as np
-from primo2.network import BayesianNetwork
+from primo2.networks import BayesianNetwork
 from primo2.nodes import DiscreteNode
 
 from primo2.inference.exact import VariableElimination
@@ -94,18 +94,18 @@ wet.set_probability("False", 0.2, {"rain":"True"})
 # Naive_marginals first computes the joint marginals over all variables
 # before summing out undesired variables
 res = VariableElimination.naive_marginals(bn, ["sprinkler"])
-print "Marginals for sprinkler: ", res.potentials
+print("Marginals for sprinkler: ", res.potentials)
 # The probability for a specific outcome can be queried as well
-print "Probability for sprinkler=True: ", res.get_potential({"sprinkler":["True"]})
+print("Probability for sprinkler=True: ", res.get_potential({"sprinkler":["True"]}))
 
 #Posterior marginals can also be queried
 res = VariableElimination.naive_marginals(bn, ["sprinkler"], {"wet_grass":"True"})
-print "Marginals for sprinkler, given wet_grass=True: ", res.potentials
+print("Marginals for sprinkler, given wet_grass=True: ", res.potentials)
 
 #Experimental: Soft evidence (not sure how to test that yet)
 # wet_grass is only true with a probability of 0.6
 res = VariableElimination.naive_marginals(bn, ["sprinkler"], {"wet_grass":np.array([0.6,0.4])}) 
-print "Marginals for sprinkler, given wet_grass=0.6True: ", res.potentials
+print("Marginals for sprinkler, given wet_grass=0.6True: ", res.potentials)
 
 
 
@@ -120,23 +120,23 @@ tree.set_evidence({"winter":"True", "slippery_road":"False"})
 # a single clique within the tree, for this to work)
 res = tree.marginals(["rain"])
 
-print "P(rain=True|winter=True, slippery_road=False): ", res.get_potential({"rain":["True"]}) 
+print("P(rain=True|winter=True, slippery_road=False): ", res.get_potential({"rain":["True"]}) )
 
 
 tree.set_evidence({"slippery_road":"True"})
 res = tree.marginals(["slippery_road"])
 
-print "P(slippery_road|slippery_road=True): ", res.get_potential()
+print("P(slippery_road|slippery_road=True): ", res.get_potential())
 
 # Approximate inference:
 mc = MCMC(bn, transitionModel = GibbsTransition(),  numSamples=1000, burnIn=1000, fullChange=True)
 
 start = time.time()
 res = mc.marginals(["sprinkler"])
-print "Approximate marginals for sprinkler: ", res.potentials
-print "Took: ", time.time()-start
+print("Approximate marginals for sprinkler: ", res.potentials)
+print("Took: ", time.time()-start)
 
 start = time.time()
 res = mc.marginals(["sprinkler"], {"wet_grass":"True"})
-print "Approximate marginals for sprinkler, given wet_grass=True: ", res.potentials
-print "Took: ", time.time()-start
+print("Approximate marginals for sprinkler, given wet_grass=True: ", res.potentials)
+print("Took: ", time.time()-start)

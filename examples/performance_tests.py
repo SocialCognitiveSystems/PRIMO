@@ -31,11 +31,11 @@ def bucketEliminationMarginals():
     
     
     
-print "Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000)
-print "Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000)
-print "Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000)
+print("Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000))
+print("Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000))
+print("Factor Tree took: ", timeit.timeit(factorTreeMarginals, number=1000))
 #                                                                                                               
-print "Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000)
-print "Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000)
-print "Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000)
+print("Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000))
+print("Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000))
+print("Bucket took: ", timeit.timeit(bucketEliminationMarginals, number=1000))
     
