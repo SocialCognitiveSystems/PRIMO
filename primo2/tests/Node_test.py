@@ -403,6 +403,74 @@ class DiscreteNode(unittest.TestCase):
 class ContinousNode(unittest.TestCase):
     pass
 
+class UtilityNode(unittest.TestCase):
+    
+    def test_get_utility_error(self):
+        n = nodes.UtilityNode("Node1")
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        with self.assertRaises(ValueError) as cm:
+            n.get_utility({"Node2": ["Value6"]})
+        self.assertEqual(str(cm.exception), "There is no utility for parent {}, value {} in node {}.".format("Node2", "['Value6']", "Node1"))
+        
+        
+    def test_get_utility_multiple_parents(self):
+        wet = nodes.UtilityNode("wet_grass")
+        sprink = nodes.DiscreteNode("sprinkler")
+        rain = nodes.DiscreteNode("rain")
+        wet.add_parent(sprink)
+        wet.add_parent(rain)
+        utilities = np.array([[10,20],[100,5]])
+        wet.set_utilities(utilities)
+        np.testing.assert_array_almost_equal(wet.get_utility({"sprinkler":"True", "rain":"False"}),utilities[0,1])
+        
+    def test_get_utility_single_parent_value(self):
+        n = nodes.UtilityNode("Node1")
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        utilities = np.array([5,10,35])
+        n.set_utilities(utilities)
+        # Get only the specified probability 
+        self.assertEqual(n.get_utility({"Node2": "Value4"}),10)
+        
+    def test_get_utility_single_parent_value_error(self):
+        n = nodes.UtilityNode("Node1")
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        utilities = np.array([5,10,35])
+        n.set_utilities(utilities)
+        with self.assertRaises(ValueError) as cm:
+            n.get_utility({"Node2": "Value6"})
+        self.assertEqual(str(cm.exception), "There is no utility for parent {}, value {} in node {}.".format("Node2", "Value6", "Node1"))
+        
+    def test_set_utilities_wrong_dimension(self):
+        wet = nodes.UtilityNode("wet_grass")
+        sprink = nodes.DiscreteNode("sprinkler")
+        rain = nodes.DiscreteNode("rain")
+        wet.add_parent(sprink)
+        wet.add_parent(rain)
+        utilities = np.array([[10,20],[100]])
+        with self.assertRaises(ValueError) as cm:
+            wet.set_utilities(utilities)
+        self.assertEqual(str(cm.exception), "The dimensions of the given " \
+                 "utility table do not match the dependency structure of the node.")
+        
+    def test_set_utility(self):
+        n = nodes.UtilityNode("Node1")
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        n.set_utility(100, {"Node2":"Value3"})        
+        self.assertEqual(n.get_utility({"Node2": "Value3"}),100)
+        
+        
+    def test_set_utility_unknown_parentValue(self):
+        n = nodes.UtilityNode("Node1")
+        n2 = nodes.DiscreteNode("Node2", ["Value3", "Value4", "Value5"])
+        n.add_parent(n2)
+        with self.assertRaises(ValueError) as cm:
+            n.set_utility(100, {"Node2":"Value6"})
+        self.assertEqual(str(cm.exception), "Parent {} does not have values {}.".format("Node2", "Value6"))
+
 """TODO for Decision Networks!!!"""    
     
 class DecisionNode(unittest.TestCase):

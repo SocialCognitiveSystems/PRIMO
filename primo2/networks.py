@@ -314,3 +314,14 @@ class DynamicBayesianNetwork(object):
             See add_transition for more information.
         """
         return self._transitions
+    
+class DecisionNetwork(object):
+    
+    def __init__(self):
+        self.node_lookup ={}
+    
+    def add_node(self, node):
+        self.node_lookup[node.name] = node
+    
+    def add_edge(self, from_name, to_name):
+        self.node_lookup[to_name].add_parent(self.node_lookup[from_name])

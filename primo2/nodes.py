@@ -132,7 +132,7 @@ class DiscreteNode(RandomNode):
             Private helper function to update the dimensions of the cpd.
             Will initialice the cpd with zeros and invalidate this node.
         """
-        dimensions = [len(self.values)]
+        dimensions = [len(self.values)] if self.values else []
         for parentName in self.parentOrder:
             dimensions.append(len(self.parents[parentName].values))
         self.cpd = np.zeros(dimensions)
@@ -199,7 +199,7 @@ class DiscreteNode(RandomNode):
                 Parent names that do not belong to this node will be ignored.
         """
         try:
-            index = [self.values.index(valueName)]
+            index = [self.values.index(valueName)] if self.values else []
         except ValueError:
             raise ValueError("This node as no value {}.".format(valueName))
         
@@ -245,7 +245,7 @@ class DiscreteNode(RandomNode):
                 A copy of the specified portion of the cpt (might be only one value).
         """
         try:
-            index = [[self.values.index(value)]]
+            index = [[self.values.index(value)]] if self.values else []
         except ValueError:
             raise ValueError("This node as no value {}.".format(value))
         
@@ -298,7 +298,7 @@ class DiscreteNode(RandomNode):
                 The probability of this value given the parent values.
         """
         try:
-            index = [self.values.index(value)]
+            index = [self.values.index(value)] if self.values else []
         except ValueError:
             raise ValueError("This node as no value {}.".format(value))
             
@@ -405,3 +405,203 @@ class DiscreteNode(RandomNode):
                 The chosen value.
         """
         return random.choice(self.values)
+
+
+class UtilityNode(RandomNode):
+    """
+        A UtilityNode is treated the same as a DiscreteNode, with the only
+        differences being that:
+            1. A DiscreteNode does not have values itself
+            2. The CPD does not represent probabilities but rather utilities!
+    """
+    
+    def __init__(self, nodeName):
+        super(UtilityNode,self).__init__(nodeName)
+        self.parents = {}
+        self.parentOrder = []
+        self.utilities = self.cpd # Use different name for cpd
+        self.valid = False
+        
+    def add_parent(self, parentNode):
+        """
+            Adds the given node as a parent/cause node of this node. 
+            Will invalidate the node as its utilities will not represent 
+            the new dependence structure.
+            The utiltiies will however be adjusted in its size.
+            
+            Should normally not be used directly.
+            
+            Parameters
+            ----------
+            parentNode: RandomNode
+                The new parent/cause node
+        """
+        self.parents[parentNode.name] = parentNode
+        self.parentOrder.append(parentNode.name)
+        self._update_dimensions()
+        
+    def _update_dimensions(self):
+        """
+            Private helper function to update the dimensions of the cpd.
+            Will initialice the cpd with zeros and invalidate this node.
+        """
+        dimensions = []
+        for parentName in self.parentOrder:
+            dimensions.append(len(self.parents[parentName].values))
+        self.cpd = np.zeros(dimensions)
+        self.valid = False
+        
+    def get_utility(self, parentValues):
+        """
+            Returns the utilities for a specific parent outcome.
+            
+            Parameters
+            ----------
+            parentValues: dict
+                A dictionary containing parentName: parentOutcome pairs
+                
+            Returns
+            -------
+                float
+                The utility associated to the given values
+        """
+        index = []
+        for parentName in self.parentOrder:
+            try:
+                index.append(self.parents[parentName].values.index(parentValues[parentName]))
+            except KeyError:
+                raise KeyError("parentValues need to specify a value for parent {} of node: {}.".format(parentName, self.name))
+            except ValueError:
+                raise ValueError("There is no utility for parent {}, value {} in node {}.".format(parentName, parentValues[parentName], self.name))
+        return self.cpd[tuple(index)]
+    
+    def set_utilities(self, utilities):
+        """
+            Allows to set the utilities directly as a utility table.
+            Special care needs to be taken to the ordering of this table's
+            dimensions, as it needs to correlate to the parent ordering!
+            The dimensions will be checked, which requires that any parents
+            have been added before calling this function!
+            
+            Paramteters
+            ------------
+            utilities: np.array
+                Array containing the utility values for all parent combinations.
+        
+        """
+        if np.shape(self.cpd) != np.shape(utilities):
+            raise ValueError("The dimensions of the given utility table do not " \
+                             "match the dependency structure of the node.")
+        self.cpd = np.copy(utilities)
+        self.valid = True
+        
+    def set_utility(self, utility, parentValues):
+        """
+            Allows to specify the utility for the specified parent value
+            combination
+            
+            Parameters
+            ---------
+            utility: float
+                Utility for that specific combination of parent values.
+            
+            parentValues: dict
+                A dictionary containing parentName: parentOutcome pairs for all
+                parents of this utility node.
+        """
+        index = []
+        for parentName in self.parentOrder:
+            if parentName in parentValues:
+                try:
+                    index.append(self.parents[parentName].values.index(parentValues[parentName]))
+                except ValueError:
+                    raise ValueError("Parent {} does not have values {}.".format(parentName, parentValues[parentName]))
+            else:
+                index.append(slice(len(self.parents[parentName].values)))
+                
+        self.cpd[tuple(index)] = utility
+
+class DecisionNode(RandomNode):
+    """
+        A DecisionNode is a RandomNode where the cpd represents a decision-rule
+        (cf Probabilistic Graphical Models, Chp. 23.2 , Koller, Friedman).
+        In most single-agent cases, this will be deterministic mapping to exactly
+        1 outcome.
+    """
+    
+    
+    def __init__(self, nodeName, decisions=["Yes", "No"]):
+        super(DecisionNode,self).__init__(nodeName)
+        self.name = nodeName
+        self.values = list(decisions)
+        self.state = None
+        self.parentOrder = []
+        self.parents = {}
+        self.deterministic = True
+        self._update_dimensions()
+
+
+    def add_parent(self, parentNode):
+        """
+            Adds the given node as a parent/cause node of this node. Will invalidate the
+            node as its cpd will not represent the new dependence structure.
+            The cpd will however be adjusted in its size.
+            
+            Should normally not be used directly.
+            
+            Parameters
+            ----------
+            parentNode: RandomNode
+                The new parent/cause node
+        """
+        
+        self.parents[parentNode.name] = parentNode
+        self.parentOrder.append(parentNode.name)
+        self._update_dimensions()
+
+    def _update_dimensions(self):
+        """
+            Private helper function to update the dimensions of the cpd.
+            Will initialice the cpd with zeros and invalidate this node.
+        """
+        dimensions = [len(self.values)] if self.values else []
+        for parentName in self.parentOrder:
+            dimensions.append(len(self.parents[parentName].values))
+        self.cpd = np.zeros(dimensions)
+        self.valid = False
+        
+    def set_decision(self, decision):
+        """
+            Sets the state of this decisionNode to the given decision.
+            This will equivalate a deterministic decision rule where only
+            the given decision has a probability of 1.
+            
+            This invalidates any prior decision assignments.
+            
+            Parameters
+            ----------
+            decision: string
+                The name of the decision this decisionNode should take.
+        """
+        self.cpd *= 0
+        try:
+            index = [self.values.index(decision)] if self.values else []
+        except ValueError:
+            raise ValueError("This node as no value {}.".format(decision))
+                
+        self.cpd[tuple(index)] = 1
+        
+    def fully_mixed(self):
+        self.cpd = np.ones(self.cpd.shape)
+        self.cpd /= len(self.values)
+        
+
+if __name__ == "__main__":
+    d1 = DiscreteNode("a")
+    d1.set_cpd(np.array([0.3,0.7]))
+    d2 = DiscreteNode("b", [])
+    d2.add_parent(d1)
+    d2.set_cpd(np.array([100,10]))
+    
+    print(d2.cpd)
+    

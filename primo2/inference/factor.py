@@ -23,7 +23,7 @@ from __future__ import division
 
 import numpy as np
 
-from ..nodes import DiscreteNode
+from ..nodes import DiscreteNode, RandomNode, UtilityNode
 
 class Factor(object):
     """
@@ -60,6 +60,80 @@ class Factor(object):
         """
         return variable in self.values
     
+    def __add__(self, other):
+        """
+            Allows addition of two factors, required for utility nodes. 
+            Will not modify the two factors in any way but return a new factor 
+            instead.
+            
+            Currently this is NOT commutative!!
+            This means that the self-factor is used as base to create the resulting
+            factor and any new variables in the other factor are added afterwards!
+                        
+            Also value order is currently NOT checked between the two factors,
+            i.e. if one factor orders the values of some variable as "True", 
+            "False" and another sorts them "False", "True" 
+            the results will be wrong!
+            
+            Paramter
+            -------
+            other : Factor
+                The factor that is multiplied to this factor
+                
+            Returns
+            -------
+                Factor
+                The sum of this (utility) factor and the other factor.
+        """
+        # Shortcuts for trivial factors
+        if len(self.variableOrder) == 0:
+            res = other.copy()
+            res.potentials = self.potentials + res.potentials
+            return res
+            
+        if len(other.variableOrder) == 0:
+            res = self.copy()
+            res.potentials = res.potentials + other.potentials
+            return res
+        
+        res = Factor()
+        res.variableOrder = list(self.variableOrder)
+        res.values = dict(self.values)
+        extra_vars = set(other.variableOrder) - set(self.variableOrder)
+        #Setup res factor based on self, extended by the missing variables from other
+        if extra_vars:
+            #Create new dimensions for each missing variable
+            slice_ = [slice(None)] * len(self.variableOrder)
+            slice_.extend([np.newaxis] * len(extra_vars))
+            res.potentials = self.potentials[slice_]
+            
+            res.variableOrder.extend(extra_vars)
+            
+            for var in extra_vars:
+                res.values[var] = tuple(other.values[var])
+                
+        else:
+            #This view is ok, since we will overwrite res.potentials below 
+            #when we compute the actual multiplication!
+            res.potentials = self.potentials[:]
+            
+        #modify other
+        f2 = other.copy()
+        extra_vars = set(res.variableOrder) - set(f2.variableOrder)
+        if extra_vars:
+            slice_ = [slice(None)] * len(f2.variableOrder)
+            slice_.extend([np.newaxis] * len(extra_vars))
+            f2.potentials = f2.potentials[slice_]
+            f2.variableOrder.extend(extra_vars)
+            
+        #Rearrange f2 potentials so that dimensions align to the order in res
+        swaparray = [f2.variableOrder.index(var) for var in res.variableOrder]
+        f2.potentials = np.transpose(f2.potentials, swaparray)
+        
+        # Pointwise addition
+        res.potentials = res.potentials + f2.potentials
+        
+        return res
     
     def __truediv__(self, other):
         """
@@ -92,9 +166,7 @@ class Factor(object):
             Currently this is NOT commutative!!
             This means that the self-factor is used as base to create the resulting
             factor and any new variables in the other factor are added afterwards!
-            They will however be added in the same order as they have been in
-            the other factor.
-            
+                        
             Also value order is currently NOT checked between the two factors,
             i.e. if one factor orders the values of some variable as "True", 
             "False" and another sorts them "False", "True" 
@@ -251,6 +323,28 @@ class Factor(object):
 
 
     @classmethod
+    def unit_factor(cls, variableOrder, values):
+        res = cls()
+        shape = []
+        for v in variableOrder:
+            res.variableOrder.append(v)
+            res.values[v] = tuple(values[v])
+            shape.append(len(values[v]))
+        res.potentials = np.ones(shape)
+        return res
+        
+    @classmethod
+    def zero_factor(cls, variableOrder, values):
+        res = cls()
+        shape = []
+        for v in variableOrder:
+            res.variableOrder.append(v)
+            res.values[v] = tuple(values[v])
+            shape.append(len(values[v]))
+        res.potentials = np.zeros(shape)
+        return res
+
+    @classmethod
     def get_trivial(cls, potential=1.0):
         """
             Helper function to create a trivial factor with a given potential.
@@ -269,6 +363,33 @@ class Factor(object):
         res = cls()
         res.potentials = potential
         return res
+    
+    
+    @classmethod
+    def from_utility_node(cls, node):
+        """
+            Helper function that allows to create a factor from a random node.
+            Currently only DiscreteNodes are supported.
+
+            Paramter
+            --------
+            node : UtilityNode
+                The node which is used to create the factor.
+
+            Returns
+            -------
+                Factor
+                The resulting factor representing the potential at the given node.        
+        """
+        if not isinstance(node, UtilityNode):
+            raise TypeError("Only DiscreteNodes are currently supported.")
+        res = cls()
+        res.values = {}
+        res.potentials = np.copy(node.cpd)
+        for p in node.parentOrder:
+            res.variableOrder.append(p)
+            res.values[p] = tuple(node.parents[p].values)
+        return res
 
     @classmethod
     def from_node(cls, node):
@@ -286,12 +407,12 @@ class Factor(object):
                 Factor
                 The resulting factor representing the potential at the given node.        
         """
-        if not isinstance(node, DiscreteNode):
+        if not isinstance(node, RandomNode): #TODO Test
             raise TypeError("Only DiscreteNodes are currently supported.")
         res = cls()
 #        res.variables[node.name] = len(res.variables)
         res.variableOrder.append(node.name)
-        res.values[node.name] = tuple(node.values)
+        res.values[node.name] = tuple(node.values) 
         res.potentials = np.copy(node.cpd)
         for p in node.parentOrder:
 #            res.variables[p] = len(res.variables)
@@ -468,3 +589,29 @@ class Factor(object):
         potentialSum = np.sum(self.potentials)
         if potentialSum > 0:
             self.potentials /= potentialSum
+            
+            
+    @classmethod
+    def joint_factor(self, node):
+        """"
+            Create a joint factor containing both a probability factor and a
+            utility factor.
+            
+            Paramter
+            --------
+            node : RandomNode
+                A node in a decision network from which to create a joint factor.
+                
+            Returns
+            ------
+                tuple
+                A joint factor represented by a tuple of two factors.
+        """
+        
+        if isinstance(node, UtilityNode):
+            utFactor = Factor.from_utility_node(node)
+            probFactor = Factor.unit_factor(utFactor.variableOrder, utFactor.values)
+        else:
+            probFactor = Factor.from_node(node)
+            utFactor = Factor.zero_factor(probFactor.variableOrder, probFactor.values)
+        return (probFactor,utFactor)

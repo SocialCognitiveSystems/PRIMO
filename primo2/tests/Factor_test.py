@@ -23,7 +23,7 @@ from __future__ import division
 import unittest
 import numpy as np
 from primo2.inference.factor import Factor
-from primo2.nodes import DiscreteNode
+from primo2.nodes import DiscreteNode, DecisionNode, UtilityNode
 
 class FactorTest(unittest.TestCase):
 
@@ -40,6 +40,12 @@ class FactorTest(unittest.TestCase):
         self.n3 = DiscreteNode("Node3", ["High", "Low"])
         cpt3 = np.array([0.8,0.2])
         self.n3.set_cpd(cpt3)
+        
+        self.un = UtilityNode("gains")
+        
+        self.un.add_parent(self.n3)
+        
+        self.un.set_utilities(np.array([100,10]))
         
     def test_create_from_discrete_node_error(self):
         with self.assertRaises(TypeError) as cm:
@@ -61,6 +67,13 @@ class FactorTest(unittest.TestCase):
             self.assertTrue(p in f)
             for v in self.n2.parents[p].values:
                 self.assertTrue(v in f.values[p])
+                
+                
+    def test_create_from_utility_node(self):
+        f = Factor.from_utility_node(self.un)
+        
+        self.assertEqual(f.variableOrder, ["Node3"])
+        np.testing.assert_array_equal(f.potentials, np.array([100,10]))
                 
     def test_create_from_samples(self):
         from collections import OrderedDict
@@ -313,6 +326,27 @@ class FactorTest(unittest.TestCase):
         f1.normalize()
         self.assertEqual(np.sum(f1.potentials), 1.0)
     
+    
+    def test_joint_factor_discrete_node(self):
+        (pF, uF) = Factor.joint_factor(self.n2)
+        
+        np.testing.assert_array_almost_equal(pF.potentials, self.n2.cpd)
+        np.testing.assert_array_almost_equal(uF.potentials, np.zeros(pF.potentials.shape))
+        
+    def test_joint_factor_decision_node(self):
+        decisionNode = DecisionNode("dNode", decisions=["yes", "no"])
+        (pF, uF) = Factor.joint_factor(decisionNode)
+        
+        np.testing.assert_array_almost_equal(pF.potentials, np.zeros(2))
+        np.testing.assert_array_almost_equal(uF.potentials, np.zeros(pF.potentials.shape))
+    
+    def test_joint_factor_utility_node(self):
+        utilityNode = UtilityNode("uNode")
+        utilityNode.set_utilities = np.array([10,100])
+        (pF, uF) = Factor.joint_factor(utilityNode)
+        
+        np.testing.assert_array_almost_equal(pF.potentials, np.ones(uF.potentials.shape))
+        np.testing.assert_array_almost_equal(uF.potentials, utilityNode.cpd)
     
 if __name__ == "__main__":
     unittest.main()
