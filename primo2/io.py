@@ -148,7 +148,7 @@ class XMLBIFParser(object):
 class DBNSpec(object):
 
     @staticmethod
-    def parse(filename):
+    def parse(filename, ignoreProperties=True):
         """
         Load the structure of a dynamic Bayesian network from a specification.
     
@@ -171,6 +171,12 @@ class DBNSpec(object):
         ----------
         filename : String
             The path of the DBN specification file.
+            
+        ignoreProperties: Boolean (optional)
+            If given, will ignore any PROPERTY tags in the xbif files, 
+            otherwise those elements will be stored in a meta attribute
+            either on the network class or the variable node, depending
+            on the nesting of the PROPERTY-tag. Default: True
     
         Returns
         -------
@@ -183,14 +189,76 @@ class DBNSpec(object):
         
         basepath = os.path.dirname(os.path.abspath(filename))
         if os.path.isabs(spec['B0']):
-            b0 = XMLBIFParser.parse(spec['B0'])
+            b0 = XMLBIFParser.parse(spec['B0'], 
+                                    ignoreProperties=ignoreProperties)
         else:
-            b0 = XMLBIFParser.parse(basepath + os.path.sep + spec['B0'])
+            b0 = XMLBIFParser.parse(basepath + os.path.sep + spec['B0'], 
+                                    ignoreProperties=ignoreProperties)
         if os.path.isabs(spec['TBN']):
-            two_tbn = XMLBIFParser.parse(spec['TBN'])
+            two_tbn = XMLBIFParser.parse(spec['TBN'], 
+                                         ignoreProperties=ignoreProperties)
         else:
-            two_tbn = XMLBIFParser.parse(basepath + os.path.sep + spec['TBN'])
+            two_tbn = XMLBIFParser.parse(basepath + os.path.sep + spec['TBN'], 
+                                         ignoreProperties=ignoreProperties)
         dbn = networks.DynamicBayesianNetwork(b0, two_tbn)
         for transition in spec['transitions']:
             dbn.add_transition(transition[0], transition[1])
         return dbn
+
+
+    @staticmethod
+    def write(dbn, path, name, ignoreProperties=True):
+        """
+        Write the structure of a dynamic Bayesian network to a specification.
+        This function will create a total of 3 files:
+        
+        1. A ".conf" specification file, which specifies which B0 and TBN
+            to use and what the transitions between time steps should be.
+        2. A "-bo.xbif" normal XBIF network description of the B0 network.
+        3. A "-2tbn.xbif" normal XBFI network description of the TBN network.
+        
+        Parameters
+        ----------
+        dbn : DynamicBayesianNetwork
+            The dynamic Network to be written
+        
+        path : String
+            The path to the folder where to store the three files
+            
+        name : String
+            The base name of the dynamic network, the created files will append
+            their repsective suffix to this name
+            
+        ignoreProperties : Boolean (optional)
+            If given, any meta information in either the networks or the
+            variable nodes will not be written to the xbif files, 
+            otherwise a PROPERTY-tag will be created for each element in
+            the meta attribute, nested either directly below the network 
+            (for network meta data) or the corresponding variable (for
+            variable meta data). Default: True
+            
+        """
+        b0 = dbn.b0
+        tbn = dbn.two_tbn
+        file_type_conf = ".conf"
+        file_type_b0 = "-b0.xbif"
+        file_type_2tbn = "-2tbn.xbif"
+
+        json_data = {
+            "B0": name + file_type_b0,
+            "TBN": name + file_type_2tbn,
+            "transitions": dbn.transitions
+        }
+
+        file_name_b0 = path + name + file_type_b0
+        XMLBIFParser.write(b0, "".join(file_name_b0), 
+                           ignoreProperties=ignoreProperties)
+
+        file_name_2tbn = path + name + file_type_2tbn
+        XMLBIFParser.write(tbn, "".join(file_name_2tbn), 
+                           ignoreProperties=ignoreProperties)
+
+        file_name_conf = path + name + file_type_conf
+        with open(file_name_conf, "w") as f:
+            json.dump(json_data, f, sort_keys=True, indent=4, 
+                      ensure_ascii=ignoreProperties)

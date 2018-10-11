@@ -237,6 +237,81 @@ class DBNSpecTest(unittest.TestCase):
             self.assertEqual(dbn._two_tbn.name, "Test_DBN_2TBN")
             #Clean up
             os.remove("/tmp/dbn-test-b0.xbif")
+
+    def test_parseDBN_load_properties(self):
+        dbn = DBNSpec.parse("primo2/tests/dbn-test.conf", ignoreProperties=False)
+        aNode = dbn.two_tbn.get_node("A")
+        self.assertEqual(len(aNode.meta), 1)
+        self.assertTrue("position" in aNode.meta[0])
+        
+        bNode = dbn.b0.get_node("B")
+        self.assertEqual(len(bNode.meta), 1)
+        self.assertTrue("position" in bNode.meta[0])
+        
+    def test_writeDBN(self):
+        testPath = "primo2/tests/"
+        testName = "test-dbn"
+        dbn = DBNSpec.parse("primo2/tests/dbn-test.conf", 
+                            ignoreProperties=False)
+        
+        DBNSpec.write(dbn, testPath, testName) # implicit ignoreProperties=True
+        writtenDBN = DBNSpec.parse(testPath+testName+".conf"
+                                   ,ignoreProperties=False)
+        
+        aNode = writtenDBN.two_tbn.get_node("A")
+        self.assertEqual(len(aNode.meta), 0)
+        
+        
+        self.assertTrue(len(dbn.b0.get_all_nodes()) == 
+                        len(writtenDBN.b0.get_all_nodes()))
+        
+        self.assertTrue(len(dbn.two_tbn.get_all_nodes()) == 
+                        len(writtenDBN.two_tbn.get_all_nodes()))
+        
+        for node in dbn.b0.get_all_nodes():
+            self.assertTrue(node in writtenDBN.b0.get_all_nodes())
+            np.testing.assert_array_almost_equal(node.cpd, 
+                                        writtenDBN.b0.get_node(node.name).cpd)
+            
+        for node in dbn.two_tbn.get_all_nodes():
+            self.assertTrue(node in writtenDBN.two_tbn.get_all_nodes())
+            np.testing.assert_array_almost_equal(node.cpd, 
+                                    writtenDBN.two_tbn.get_node(node.name).cpd)
+            
+        for suf in [".conf", "-b0.xbif", "-2tbn.xbif"]:
+            os.remove(testPath + testName + suf)
+            
+    def test_writeDBN_with_properties(self):
+        testPath = "primo2/tests/"
+        testName = "test-dbn"
+        dbn = DBNSpec.parse("primo2/tests/dbn-test.conf", 
+                            ignoreProperties=False)
+        DBNSpec.write(dbn, testPath, testName, ignoreProperties=False)
+        writtenDBN = DBNSpec.parse(testPath+testName+".conf", 
+                                   ignoreProperties=False)
+        
+        aNode = writtenDBN.two_tbn.get_node("A")
+        self.assertEqual(len(aNode.meta), 1)
+        
+        
+        self.assertTrue(len(dbn.b0.get_all_nodes()) == 
+                        len(writtenDBN.b0.get_all_nodes()))
+        
+        self.assertTrue(len(dbn.two_tbn.get_all_nodes()) == 
+                        len(writtenDBN.two_tbn.get_all_nodes()))
+        
+        for node in dbn.b0.get_all_nodes():
+            self.assertTrue(node in writtenDBN.b0.get_all_nodes())
+            np.testing.assert_array_almost_equal(node.cpd, 
+                                        writtenDBN.b0.get_node(node.name).cpd)
+            
+        for node in dbn.two_tbn.get_all_nodes():
+            self.assertTrue(node in writtenDBN.two_tbn.get_all_nodes())
+            np.testing.assert_array_almost_equal(node.cpd, 
+                                    writtenDBN.two_tbn.get_node(node.name).cpd)
+            
+        for suf in [".conf", "-b0.xbif", "-2tbn.xbif"]:
+            os.remove(testPath + testName + suf)
     
 if __name__ == "__main__":
     #Workaround so that this script also finds the resource files when run directly
